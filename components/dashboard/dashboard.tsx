@@ -310,7 +310,7 @@ export default function PrayerDashboard() {
 
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl h-16 font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
             Daily Prayer Journey
           </h1>
           <p className="text-xl text-muted-foreground">
