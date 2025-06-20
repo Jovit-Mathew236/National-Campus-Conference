@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Client, Account, Databases, Query } from "node-appwrite";
 import { NextRequest, NextResponse } from "next/server";
 
