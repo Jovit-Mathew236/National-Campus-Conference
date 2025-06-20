@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react"; // Removed unused useEffect
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ import {
   Heart,
   Check,
   Star,
-  // User, // User icon was imported but not used directly
   MessageCircle,
   Church,
   BookOpen,
@@ -19,16 +18,22 @@ import {
   Plus,
   Clock,
   Users,
+  Loader2,
 } from "lucide-react";
+import confetti from "canvas-confetti";
 
 // Define a type for the checklist keys for better type safety
-type ChecklistItemKey = "holyMass" | "rosary" | "wordOfGod" | "ourFather";
+type ChecklistItemKey =
+  | "mass_attended"
+  | "rosary_prayed"
+  | "word_of_god_read"
+  | "our_father_done";
 
 const initialChecklist: Record<ChecklistItemKey, boolean> = {
-  holyMass: false,
-  rosary: false,
-  wordOfGod: false,
-  ourFather: false,
+  mass_attended: false,
+  rosary_prayed: false,
+  word_of_god_read: false,
+  our_father_done: false,
 };
 
 interface PrayerRequest {
@@ -39,12 +44,23 @@ interface PrayerRequest {
   prayerCount: number;
   userPrayed: boolean;
   createdAt: string;
-  avatar?: string; // Optional avatar
+  avatar?: string;
+}
+
+interface DailyPrayerData {
+  campus_prayer_done: boolean;
+  mass_attended: boolean;
+  rosary_prayed: boolean;
+  word_of_god_read: boolean;
+  our_father_done: boolean;
+  date: string;
 }
 
 export default function PrayerDashboard() {
   const [dailyPrayerDone, setDailyPrayerDone] = useState(false);
   const [checklist, setChecklist] = useState(initialChecklist);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([
     {
       id: 1,
@@ -55,7 +71,7 @@ export default function PrayerDashboard() {
       prayerCount: 12,
       userPrayed: false,
       createdAt: "2 hours ago",
-      avatar: "/api/placeholder/40/40", // Make sure this endpoint works or use actual image paths
+      avatar: "/api/placeholder/40/40",
     },
     {
       id: 2,
@@ -75,22 +91,129 @@ export default function PrayerDashboard() {
       prayerCount: 25,
       userPrayed: false,
       createdAt: "6 hours ago",
-      avatar: "/api/placeholder/40/40", // Make sure this endpoint works or use actual image paths
+      avatar: "/api/placeholder/40/40",
     },
   ]);
-  const [showCelebration, setShowCelebration] = useState(false);
+  // const [showCelebration, setShowCelebration] = useState(false);
 
-  const handleAmenClick = () => {
-    setDailyPrayerDone(true);
-    setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 3000);
+  // Load daily prayer data on component mount
+  useEffect(() => {
+    loadDailyPrayerData();
+  }, []);
+
+  const loadDailyPrayerData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/prayers/daily", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const data: DailyPrayerData = result.data;
+
+        setDailyPrayerDone(data.campus_prayer_done);
+        setChecklist({
+          mass_attended: data.mass_attended,
+          rosary_prayed: data.rosary_prayed,
+          word_of_god_read: data.word_of_god_read,
+          our_father_done: data.our_father_done,
+        });
+      } else {
+        console.error("Failed to load daily prayer data");
+      }
+    } catch (error) {
+      console.error("Error loading daily prayer data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleChecklistItem = (item: ChecklistItemKey) => {
+  const updatePrayerData = async (updates: Partial<DailyPrayerData>) => {
+    try {
+      setSaving(true);
+      const response = await fetch("/api/prayers/daily", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update prayer data");
+      }
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error("Error updating prayer data:", error);
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAmenClick = async () => {
+    const success = await updatePrayerData({ campus_prayer_done: true });
+
+    if (success) {
+      setDailyPrayerDone(true);
+      const duration = 5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) =>
+        Math.random() * (max - min) + min;
+
+      const interval = window.setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        });
+      }, 250);
+      // setShowCelebration(true);
+      // setTimeout(() => setShowCelebration(false), 3000);
+    } else {
+      alert("Failed to update prayer status. Please try again.");
+    }
+  };
+
+  const toggleChecklistItem = async (item: ChecklistItemKey) => {
+    const newValue = !checklist[item];
+
+    // Optimistically update UI
     setChecklist((prev) => ({
       ...prev,
-      [item]: !prev[item],
+      [item]: newValue,
     }));
+
+    // Update database
+    const success = await updatePrayerData({ [item]: newValue });
+
+    if (!success) {
+      // Revert on failure
+      setChecklist((prev) => ({
+        ...prev,
+        [item]: !newValue,
+      }));
+      alert("Failed to update prayer status. Please try again.");
+    }
   };
 
   const handlePrayerReaction = (requestId: number) => {
@@ -114,9 +237,22 @@ export default function PrayerDashboard() {
   const progressPercentage =
     totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+          <span className="text-lg text-indigo-600">
+            Loading your prayer journey...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {showCelebration && (
+      {/* {showCelebration && (
         <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
           <div className="animate-bounce">
             <div className="text-6xl">🎉</div>
@@ -127,9 +263,51 @@ export default function PrayerDashboard() {
             </div>
           </div>
         </div>
+      )} */}
+
+      {saving && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-white border border-indigo-200 rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+            <span className="text-sm text-indigo-600">Saving...</span>
+          </div>
+        </div>
       )}
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Top Bar with Logout Button */}
+        <div className="flex justify-end items-center mb-6">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 border-indigo-500 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 font-semibold shadow-sm px-5 py-2 rounded-full transition-all duration-200"
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/login";
+              } catch (e) {
+                alert("Logout failed. Please try again.");
+                console.error("Logout error:", e);
+              }
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1"
+              />
+            </svg>
+            Logout
+          </Button>
+        </div>
+
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
@@ -166,10 +344,18 @@ export default function PrayerDashboard() {
                   {!dailyPrayerDone ? (
                     <Button
                       onClick={handleAmenClick}
+                      disabled={saving}
                       size="lg"
-                      className="bg-white text-indigo-600 hover:bg-white/90 text-xl px-12 py-6 h-auto rounded-full font-bold shadow-lg transform hover:scale-105 transition-all duration-300"
+                      className="bg-white text-indigo-600 hover:bg-white/90 text-xl px-12 py-6 h-auto rounded-full font-bold shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
                     >
-                      🙏 AMEN
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>🙏 AMEN</>
+                      )}
                     </Button>
                   ) : (
                     <div className="space-y-4">
@@ -217,25 +403,25 @@ export default function PrayerDashboard() {
               <CardContent className="space-y-4">
                 {[
                   {
-                    key: "holyMass",
+                    key: "mass_attended",
                     icon: Church,
                     label: "Holy Mass",
                     description: "Attend or watch Mass",
                   },
                   {
-                    key: "rosary",
+                    key: "rosary_prayed",
                     icon: Star,
                     label: "Rosary",
                     description: "Pray the Holy Rosary",
                   },
                   {
-                    key: "wordOfGod",
+                    key: "word_of_god_read",
                     icon: BookOpen,
                     label: "Word of God",
                     description: "Read Scripture",
                   },
                   {
-                    key: "ourFather",
+                    key: "our_father_done",
                     icon: Cross,
                     label: "Our Father",
                     description: "Pray the Lord's Prayer",
@@ -244,18 +430,18 @@ export default function PrayerDashboard() {
                   <div key={key}>
                     <div
                       className={`group p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-md ${
-                        checklist[key as ChecklistItemKey] // Use type assertion here
+                        checklist[key as ChecklistItemKey]
                           ? "border-emerald-200 bg-emerald-50 shadow-sm"
                           : "border-border hover:border-indigo-200 hover:bg-accent/50"
-                      }`}
+                      } ${saving ? "opacity-50 pointer-events-none" : ""}`}
                       onClick={() =>
-                        toggleChecklistItem(key as ChecklistItemKey)
-                      } // And here
+                        !saving && toggleChecklistItem(key as ChecklistItemKey)
+                      }
                     >
                       <div className="flex items-center space-x-4">
                         <div
                           className={`p-2 rounded-full transition-colors ${
-                            checklist[key as ChecklistItemKey] // And here
+                            checklist[key as ChecklistItemKey]
                               ? "bg-emerald-100 text-emerald-600"
                               : "bg-muted text-muted-foreground group-hover:bg-indigo-100 group-hover:text-indigo-600"
                           }`}
@@ -271,7 +457,7 @@ export default function PrayerDashboard() {
                         </div>
 
                         <div className="flex-shrink-0">
-                          {checklist[key as ChecklistItemKey] ? ( // And here
+                          {checklist[key as ChecklistItemKey] ? (
                             <div className="p-1 bg-emerald-500 rounded-full">
                               <Check className="w-4 h-4 text-white" />
                             </div>
@@ -388,7 +574,6 @@ export default function PrayerDashboard() {
                 <Button
                   className="w-full mt-6 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                   size="lg"
-                  // onClick={() => { /* Implement add prayer request functionality */ }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Share Prayer Request

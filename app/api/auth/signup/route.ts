@@ -1,5 +1,5 @@
 // app/api/auth/signup/route.ts
-import { Client, Account, ID } from "node-appwrite";
+import { Client, Account, ID, Databases } from "node-appwrite";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -34,16 +34,28 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ||
           "https://cloud.appwrite.io/v1"
       )
-      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
+      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string)
+      .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY as string);
 
     // Use Account service instead of Users service for registration
     const account = new Account(client);
-
+    const databases = new Databases(client);
+    const requestId = ID.unique();
     // Create account using the account service
     console.log("Creating user account...");
     const user = await account.create(ID.unique(), email, password, name);
     console.log("User created:", user.email);
-
+    await databases.createDocument(
+      process.env.NEXT_PUBLIC_DATABASE_ID as string,
+      process.env.NEXT_PUBLIC_USERS_COLLECTION_ID as string,
+      requestId,
+      {
+        user_id: user.$id,
+        email,
+        display_name: name,
+        joined_date: new Date().toISOString(),
+      }
+    );
     // Create a session for the new user
     console.log("Creating session...");
     const session = await account.createEmailPasswordSession(email, password);
