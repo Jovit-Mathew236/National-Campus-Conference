@@ -3,24 +3,24 @@
 import { useState, Suspense } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
 function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<{
     email?: string;
     password?: string;
@@ -38,17 +38,10 @@ function LoginFormContent() {
 
     try {
       const formData = new FormData(event.target as HTMLFormElement);
-      const email = formData.get("email") as string;
+      const email = (formData.get("email") as string)?.trim();
       const password = formData.get("password") as string;
 
-      // Make sure email is trimmed to remove any whitespace
-      const trimmedEmail = email.trim();
-
-      // Validate form data with Zod
-      const validationResult = loginSchema.safeParse({
-        email: trimmedEmail,
-        password,
-      });
+      const validationResult = loginSchema.safeParse({ email, password });
 
       if (!validationResult.success) {
         const errors = validationResult.error.flatten().fieldErrors;
@@ -60,27 +53,24 @@ function LoginFormContent() {
         return;
       }
 
-      // Call the API route for login
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const data = await res.json();
         setErrorMessage(
-          data.error || "Invalid email or password. Please try again."
+          data.error || "Login failed. Please check your credentials."
         );
         setIsLoading(false);
         return;
       }
-      console.log("Login successful, redirecting...", res, redirectPath);
-
-      // On success, redirect to dashboard or redirectPath
+      // On success, redirect
       router.push(redirectPath);
     } catch (error) {
-      setErrorMessage("Invalid email or password. Please try again.");
+      setErrorMessage("An unexpected error occurred. Please try again.");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -88,159 +78,252 @@ function LoginFormContent() {
   }
 
   return (
-    <Card className="w-fit border-none shadow-md p-0">
-      <div className="bg-secondary rounded-t-md p-6 flex flex-col">
-        <div className="mt-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-primary text-3xl font-semibold">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background p-4 sm:p-6 md:p-8">
+      <div className="relative w-full max-w-4xl bg-card shadow-2xl rounded-xl overflow-hidden md:grid md:grid-cols-2">
+        {/* Left Side - Illustration/Branding (visible on md and up) */}
+        <div className="hidden md:flex flex-col items-center justify-center p-12 bg-primary text-primary-foreground">
+          <Image
+            src="/images/auth_illustration.png" // Replace with a more thematic/modern illustration
+            alt="Prayer and Community"
+            width={300}
+            height={300}
+            className="mb-8"
+          />
+          <h1 className="text-3xl font-bold text-center mb-4">
+            Join Our Prayer Community
+          </h1>
+          <p className="text-center text-primary-foreground/80">
+            Connect, share, and grow in faith together. Your spiritual journey
+            awaits.
+          </p>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="p-6 sm:p-8 md:p-12">
+          <div className="mb-8 text-center md:text-left">
+            <Link href="/" className="inline-block mb-6">
+              {/* Replace with your actual logo component or image */}
+              <Image
+                src="/images/logo.png" // Replace with your logo
+                alt="App Logo"
+                width={40}
+                height={40}
+              />
+            </Link>
+            <h2 className="text-3xl font-bold text-foreground">
               Welcome Back!
             </h2>
-            <p className="text-primary mt-2 opacity-80">Sign in to continue</p>
+            <p className="text-muted-foreground mt-1">
+              Sign in to continue your prayer journey.
+            </p>
           </div>
-          <div className="flex flex-end">
-            <Image
-              src="/images/auth_illustration.png"
-              alt="Person working"
-              width={180}
-              height={150}
-            />
-          </div>
-        </div>
-      </div>
 
-      <form onSubmit={onSubmit}>
-        <CardContent className="p-6 pt-8">
           {errorMessage && (
-            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 mb-4">
-              {errorMessage}
+            <div
+              className="bg-destructive/10 border border-destructive/30 text-destructive rounded-md p-3 mb-6 text-sm flex items-center gap-2"
+              role="alert"
+            >
+              <Lock size={16} /> {/* Or a more suitable error icon */}
+              <span>{errorMessage}</span>
             </div>
           )}
-          <div className="grid gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="email" className="text-base font-medium">
-                Email
+
+          <form onSubmit={onSubmit} className="space-y-6">
+            <div>
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-foreground/90"
+              >
+                Email Address
               </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter email"
-                disabled={isLoading}
-                className={`h-12 rounded-md ${
-                  formErrors.email ? "border-red-500" : ""
-                }`}
-              />
+              <div className="relative mt-1">
+                <Mail
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  disabled={isLoading}
+                  className={`pl-10 h-12 rounded-md ${
+                    formErrors.email
+                      ? "border-destructive focus-visible:ring-destructive/50"
+                      : "border-border"
+                  }`}
+                  aria-invalid={!!formErrors.email}
+                  aria-describedby="email-error"
+                />
+              </div>
               {formErrors.email && (
-                <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                <p id="email-error" className="text-destructive text-xs mt-1.5">
+                  {formErrors.email}
+                </p>
               )}
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password" className="text-base font-medium">
-                Password
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter password"
-                disabled={isLoading}
-                className={`h-12 rounded-md ${
-                  formErrors.password ? "border-red-500" : ""
-                }`}
-              />
+
+            <div>
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-foreground/90"
+                >
+                  Password
+                </Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-primary hover:text-primary/80 font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative mt-1">
+                <Lock
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                  className={`pl-10 pr-10 h-12 rounded-md ${
+                    // Added pr-10 for the eye icon
+                    formErrors.password
+                      ? "border-destructive focus-visible:ring-destructive/50"
+                      : "border-border"
+                  }`}
+                  aria-invalid={!!formErrors.password}
+                  aria-describedby="password-error"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {formErrors.password && (
-                <p className="text-red-500 text-sm mt-1">
+                <p
+                  id="password-error"
+                  className="text-destructive text-xs mt-1.5"
+                >
                   {formErrors.password}
                 </p>
               )}
             </div>
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center">
               <Checkbox
                 id="remember"
-                className="rounded border-border data-[state=checked]:bg-primary"
+                name="remember" // Good for form submission if needed
+                disabled={isLoading}
+                className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
               />
-              <label
+              <Label
                 htmlFor="remember"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="ml-2 block text-sm text-foreground/90 cursor-pointer"
               >
                 Remember me
-              </label>
+              </Label>
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 p-6 pt-0">
-          <Button
-            className="w-full h-12 rounded-md bg-primary text-primary-foreground"
-            type="submit"
-            disabled={isLoading}
-          >
-            {isLoading ? "Loading..." : "Log In"}
-          </Button>
-          <div className="flex justify-center items-center mt-2 text-muted-foreground">
-            <Lock className="w-4 h-4 mr-2" />
-            <Link
-              href="/forgot-password"
-              className="text-muted-foreground hover:text-foreground"
+
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring focus-visible:ring-offset-2"
+              disabled={isLoading}
             >
-              Forgot your password?
-            </Link>
-          </div>
-          <div className="text-center text-sm mt-4">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"
-              className="text-primary font-medium hover:text-primary/80"
+              className="font-semibold text-primary hover:text-primary/80"
             >
-              Sign up
+              Create an account
             </Link>
+          </p>
+
+          <div className="mt-10 text-center text-xs text-muted-foreground/70">
+            © {new Date().getFullYear()} National Campus Conference&apos;25. All
+            rights reserved.
+            {/* Or your specific branding: © 2024 Crafted by Jesusyouthpala */}
           </div>
-          <div className="text-center text-xs text-muted-foreground mt-8">
-            {/* © 2020 Crafted and designed Jesusyouthpala */}
-          </div>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function LoginFormSkeleton() {
   return (
-    <Card className="w-fit border-none shadow-md p-0 animate-pulse">
-      <div className="bg-secondary rounded-t-md p-6 flex flex-col">
-        <div className="mt-4 flex justify-between items-center">
-          <div>
-            <div className="h-8 bg-gray-300 rounded w-48 mb-2"></div>
-            <div className="h-4 bg-gray-300 rounded w-32"></div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-4xl bg-card shadow-2xl rounded-xl overflow-hidden md:grid md:grid-cols-2 animate-pulse">
+        {/* Left Side Skeleton */}
+        <div className="hidden md:flex flex-col items-center justify-center p-12 bg-primary/80">
+          <div className="w-48 h-48 bg-primary-foreground/20 rounded-full mb-8"></div>
+          <div className="h-8 bg-primary-foreground/20 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-primary-foreground/20 rounded w-full mb-2"></div>
+          <div className="h-4 bg-primary-foreground/20 rounded w-5/6"></div>
+        </div>
+
+        {/* Right Side Skeleton */}
+        <div className="p-6 sm:p-8 md:p-12">
+          <div className="mb-8">
+            <div className="w-10 h-10 bg-muted rounded mb-6"></div>
+            <div className="h-8 bg-muted rounded w-3/5 mb-2"></div>
+            <div className="h-4 bg-muted rounded w-4/5"></div>
           </div>
-          <div className="flex flex-end">
-            <div className="w-[180px] h-[150px] bg-gray-300 rounded"></div>
+
+          <div className="space-y-6">
+            <div>
+              <div className="h-4 bg-muted rounded w-1/4 mb-1.5"></div>
+              <div className="h-12 bg-muted rounded-md"></div>
+            </div>
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <div className="h-4 bg-muted rounded w-1/4"></div>
+                <div className="h-3 bg-muted rounded w-1/5"></div>
+              </div>
+              <div className="h-12 bg-muted rounded-md"></div>
+            </div>
+            <div className="flex items-center">
+              <div className="w-5 h-5 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded w-1/3 ml-2"></div>
+            </div>
+            <div className="h-12 bg-primary/80 rounded-md"></div>
           </div>
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto mt-8"></div>
+          <div className="h-3 bg-muted rounded w-1/3 mx-auto mt-10"></div>
         </div>
       </div>
-      <CardContent className="p-6 pt-8">
-        <div className="grid gap-6">
-          <div className="grid gap-2">
-            <div className="h-4 bg-gray-300 rounded w-16"></div>
-            <div className="h-12 bg-gray-300 rounded"></div>
-          </div>
-          <div className="grid gap-2">
-            <div className="h-4 bg-gray-300 rounded w-20"></div>
-            <div className="h-12 bg-gray-300 rounded"></div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gray-300 rounded"></div>
-            <div className="h-4 bg-gray-300 rounded w-24"></div>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-4 p-6 pt-0">
-        <div className="w-full h-12 bg-gray-300 rounded"></div>
-      </CardFooter>
-    </Card>
+    </div>
   );
 }
 
 export function LoginForm() {
+  // Suspense is good if LoginFormContent has its own data fetching
+  // or heavy computations that might suspend.
+  // For a simple form like this, direct rendering is also fine if useSearchParams
+  // doesn't cause suspension in your setup (it usually doesn't trigger it heavily).
   return (
     <Suspense fallback={<LoginFormSkeleton />}>
       <LoginFormContent />
