@@ -92,8 +92,8 @@ function LoginFormContent() {
       // Go to OAuth provider login page
       account.createOAuth2Session(
         OAuthProvider.Google, // provider
-        `${window.location.origin}/dashboard`,
-        `${window.location.origin}/signup?oauth_error=true`
+        "https://ncc25.vercel.app/dashboard",
+        "https://ncc25.vercel.app/signup?oauth_error=true"
       );
     } catch (error) {
       setErrorMessage("Failed to initiate Google Sign-In. Please try again.");
