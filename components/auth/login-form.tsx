@@ -19,6 +19,7 @@ const loginSchema = z.object({
 
 function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false); // Added for Google Sign In
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<{
@@ -77,13 +78,43 @@ function LoginFormContent() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setIsGoogleLoading(true);
+    setErrorMessage(null);
+    try {
+      const appwriteEndpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+      const appwriteProject = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+
+      if (!appwriteEndpoint || !appwriteProject) {
+        setErrorMessage(
+          "Google Sign-In is currently unavailable. Please try again later or use email/password."
+        );
+        setIsGoogleLoading(false);
+        return;
+      }
+      // Success URL should be where the user lands after successful Google login.
+      // This might be the `redirectPath` or a dedicated OAuth handler page.
+      const successUrl = `${window.location.origin}${redirectPath}`;
+      // Failure URL brings them back to login, perhaps with an error.
+      const failureUrl = `${window.location.origin}/login?oauth_error=true`;
+
+      window.location.href = `${appwriteEndpoint}/account/sessions/oauth2/google?project=${appwriteProject}&success=${encodeURIComponent(
+        successUrl
+      )}&failure=${encodeURIComponent(failureUrl)}`;
+    } catch (error) {
+      setErrorMessage("Failed to initiate Google Sign-In. Please try again.");
+      console.error("Google Sign-In Error:", error);
+      setIsGoogleLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background p-4 sm:p-6 md:p-8">
       <div className="relative w-full max-w-4xl bg-card shadow-2xl rounded-xl overflow-hidden md:grid md:grid-cols-2">
-        {/* Left Side - Illustration/Branding (visible on md and up) */}
+        {/* Left Side - Illustration/Branding */}
         <div className="hidden md:flex flex-col items-center justify-center p-12 bg-primary text-primary-foreground">
           <Image
-            src="/images/auth_illustration.png" // Replace with a more thematic/modern illustration
+            src="/images/auth_illustration.png" // Your existing illustration
             alt="Prayer and Community"
             width={300}
             height={300}
@@ -102,9 +133,8 @@ function LoginFormContent() {
         <div className="p-6 sm:p-8 md:p-12">
           <div className="mb-8 text-center md:text-left">
             <Link href="/" className="inline-block mb-6">
-              {/* Replace with your actual logo component or image */}
               <Image
-                src="/images/logo.png" // Replace with your logo
+                src="/images/logo.png" // Your logo
                 alt="App Logo"
                 width={40}
                 height={40}
@@ -123,7 +153,7 @@ function LoginFormContent() {
               className="bg-destructive/10 border border-destructive/30 text-destructive rounded-md p-3 mb-6 text-sm flex items-center gap-2"
               role="alert"
             >
-              <Lock size={16} /> {/* Or a more suitable error icon */}
+              <Lock size={16} />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -146,7 +176,7 @@ function LoginFormContent() {
                   name="email"
                   type="email"
                   placeholder="you@example.com"
-                  disabled={isLoading}
+                  disabled={isLoading || isGoogleLoading}
                   className={`pl-10 h-12 rounded-md ${
                     formErrors.email
                       ? "border-destructive focus-visible:ring-destructive/50"
@@ -188,9 +218,8 @@ function LoginFormContent() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  disabled={isLoading}
+                  disabled={isLoading || isGoogleLoading}
                   className={`pl-10 pr-10 h-12 rounded-md ${
-                    // Added pr-10 for the eye icon
                     formErrors.password
                       ? "border-destructive focus-visible:ring-destructive/50"
                       : "border-border"
@@ -224,8 +253,8 @@ function LoginFormContent() {
             <div className="flex items-center">
               <Checkbox
                 id="remember"
-                name="remember" // Good for form submission if needed
-                disabled={isLoading}
+                name="remember"
+                disabled={isLoading || isGoogleLoading}
                 className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
               />
               <Label
@@ -239,7 +268,7 @@ function LoginFormContent() {
             <Button
               type="submit"
               className="w-full h-12 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring focus-visible:ring-offset-2"
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
             >
               {isLoading ? (
                 <>
@@ -251,6 +280,48 @@ function LoginFormContent() {
               )}
             </Button>
           </form>
+
+          {/* OR Separator and Google Sign In Button */}
+          <div className="relative my-6">
+            <div
+              className="absolute inset-0 flex items-center"
+              aria-hidden="true"
+            >
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or sign in with
+              </span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full h-12 rounded-md border-border hover:bg-accent hover:text-accent-foreground"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading || isGoogleLoading}
+            type="button"
+          >
+            {isGoogleLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <Image
+                  src="/images/google-logo.png" // Ensure you have this image
+                  alt="Google"
+                  width={20} // Adjusted size to match signup form
+                  height={20}
+                  className="mr-2"
+                />
+                Sign In with Google
+              </>
+            )}
+          </Button>
+          {/* End Google Sign In */}
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
@@ -265,7 +336,6 @@ function LoginFormContent() {
           <div className="mt-10 text-center text-xs text-muted-foreground/70">
             © {new Date().getFullYear()} National Campus Conference&apos;25. All
             rights reserved.
-            {/* Or your specific branding: © 2024 Crafted by Jesusyouthpala */}
           </div>
         </div>
       </div>
@@ -292,7 +362,6 @@ function LoginFormSkeleton() {
             <div className="h-8 bg-muted rounded w-3/5 mb-2"></div>
             <div className="h-4 bg-muted rounded w-4/5"></div>
           </div>
-
           <div className="space-y-6">
             <div>
               <div className="h-4 bg-muted rounded w-1/4 mb-1.5"></div>
@@ -309,10 +378,24 @@ function LoginFormSkeleton() {
               <div className="w-5 h-5 bg-muted rounded"></div>
               <div className="h-4 bg-muted rounded w-1/3 ml-2"></div>
             </div>
-            <div className="h-12 bg-primary/80 rounded-md"></div>
+            <div className="h-12 bg-primary/80 rounded-md"></div>{" "}
+            {/* Sign In Button */}
           </div>
-          <div className="h-4 bg-muted rounded w-1/2 mx-auto mt-8"></div>
-          <div className="h-3 bg-muted rounded w-1/3 mx-auto mt-10"></div>
+          {/* Skeleton for OR Separator and Google Button */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/50" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 h-3 w-1/4 bg-muted rounded"></span>
+            </div>
+          </div>
+          <div className="h-12 bg-muted/80 rounded-md border border-border/50"></div>{" "}
+          {/* Google Button Skeleton */}
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto mt-8"></div>{" "}
+          {/* Create account link */}
+          <div className="h-3 bg-muted rounded w-2/3 mx-auto mt-10"></div>{" "}
+          {/* Copyright */}
         </div>
       </div>
     </div>
@@ -320,10 +403,6 @@ function LoginFormSkeleton() {
 }
 
 export function LoginForm() {
-  // Suspense is good if LoginFormContent has its own data fetching
-  // or heavy computations that might suspend.
-  // For a simple form like this, direct rendering is also fine if useSearchParams
-  // doesn't cause suspension in your setup (it usually doesn't trigger it heavily).
   return (
     <Suspense fallback={<LoginFormSkeleton />}>
       <LoginFormContent />
