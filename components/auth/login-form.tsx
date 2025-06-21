@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Account, Client, OAuthProvider } from "appwrite";
 
 // Define Zod schema for form validation
 const loginSchema = z.object({
@@ -82,25 +83,18 @@ function LoginFormContent() {
     setIsGoogleLoading(true);
     setErrorMessage(null);
     try {
-      const appwriteEndpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-      const appwriteProject = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
+      const client = new Client()
+        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
+        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
 
-      if (!appwriteEndpoint || !appwriteProject) {
-        setErrorMessage(
-          "Google Sign-In is currently unavailable. Please try again later or use email/password."
-        );
-        setIsGoogleLoading(false);
-        return;
-      }
-      // Success URL should be where the user lands after successful Google login.
-      // This might be the `redirectPath` or a dedicated OAuth handler page.
-      const successUrl = `${window.location.origin}${redirectPath}`;
-      // Failure URL brings them back to login, perhaps with an error.
-      const failureUrl = `${window.location.origin}/login?oauth_error=true`;
+      const account = new Account(client);
 
-      window.location.href = `${appwriteEndpoint}/account/sessions/oauth2/google?project=${appwriteProject}&success=${encodeURIComponent(
-        successUrl
-      )}&failure=${encodeURIComponent(failureUrl)}`;
+      // Go to OAuth provider login page
+      account.createOAuth2Session(
+        OAuthProvider.Google, // provider
+        `${window.location.origin}/dashboard`,
+        `${window.location.origin}/signup?oauth_error=true`
+      );
     } catch (error) {
       setErrorMessage("Failed to initiate Google Sign-In. Please try again.");
       console.error("Google Sign-In Error:", error);
