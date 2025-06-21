@@ -59,10 +59,11 @@ async function getUserSession(
     );
   }
 }
+
 // POST /api/prayers/requests/[id]/react - Toggle prayer reaction
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const sessionData = await getUserSession(request);
@@ -74,7 +75,9 @@ export async function POST(
 
     // If we reach here, sessionData is UserSessionData
     const { user, databases } = sessionData;
-    const requestId = params.id;
+
+    // Await the params since it's a Promise in Next.js 15+
+    const { id: requestId } = await params;
 
     // Check if prayer request exists
     try {
