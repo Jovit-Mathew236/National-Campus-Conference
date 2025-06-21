@@ -195,7 +195,7 @@ function LoginFormContent() {
             </Link>
           </div>
           <div className="text-center text-xs text-muted-foreground mt-8">
-            © 2020 Crafted and designed Jesusyouthpala
+            {/* © 2020 Crafted and designed Jesusyouthpala */}
           </div>
         </CardFooter>
       </form>
