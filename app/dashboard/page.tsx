@@ -1,6 +1,6 @@
 import PrayerDashboard from "@/components/dashboard/dashboard";
 
-export default function LoginPage() {
+export default function Dashboard() {
   return (
     <div className="">
       <PrayerDashboard />
