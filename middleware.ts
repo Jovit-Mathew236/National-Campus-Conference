@@ -29,6 +29,27 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("appwrite-session");
   const url = request.nextUrl.clone();
 
+  // Mobile browser detection
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      request.headers.get("user-agent") || ""
+    );
+
+  // Check for alternative session storage methods
+  const authHeader = request.headers.get("authorization");
+  const sessionFromHeader = authHeader?.replace("Bearer ", "");
+
+  // Try multiple cookie names (Appwrite might use different formats)
+  const alternativeSession =
+    request.cookies.get(
+      `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`
+    ) ||
+    request.cookies.get("session") ||
+    request.cookies.get("auth-token");
+
+  const hasValidSession =
+    sessionCookie?.value || sessionFromHeader || alternativeSession?.value;
+
   // Skip middleware for static assets
   if (STATIC_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
@@ -63,11 +84,16 @@ export async function middleware(request: NextRequest) {
 
   // Handle public paths
   if (PUBLIC_PATHS.some((path) => pathname === path)) {
+    // For mobile browsers, be more lenient with session checking
+    if (isMobile && pathname === "/login") {
+      // Add a query parameter to indicate mobile access
+      url.searchParams.set("mobile", "true");
+      // Let the login page handle the session check client-side
+      return NextResponse.rewrite(url);
+    }
+
     // If user has session and tries to access auth pages, redirect to dashboard
-    if (
-      sessionCookie?.value &&
-      (pathname === "/login" || pathname === "/signup")
-    ) {
+    if (hasValidSession && (pathname === "/login" || pathname === "/signup")) {
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     }
@@ -76,7 +102,15 @@ export async function middleware(request: NextRequest) {
 
   // Handle root path redirect
   if (pathname === "/") {
-    if (sessionCookie?.value) {
+    if (isMobile) {
+      // For mobile, always redirect to login and let client-side handle auth check
+      url.pathname = "/login";
+      url.searchParams.set("mobile", "true");
+      url.searchParams.set("autocheck", "true");
+      return NextResponse.redirect(url);
+    }
+
+    if (hasValidSession) {
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     } else {
@@ -86,7 +120,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // For all other protected routes
-  if (!sessionCookie?.value) {
+  if (!hasValidSession) {
+    // For mobile browsers, be more forgiving
+    if (isMobile && pathname.startsWith("/dashboard")) {
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      url.searchParams.set("mobile", "true");
+      return NextResponse.redirect(url);
+    }
+
     // Store the intended destination for redirect after login
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);

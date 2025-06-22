@@ -20,7 +20,7 @@ const loginSchema = z.object({
 
 function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false); // Added for Google Sign In
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<{
@@ -31,6 +31,23 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
+
+  // Check for OAuth error in URL params
+  const oauthError = searchParams.get("oauth_error");
+  if (oauthError && !errorMessage) {
+    switch (oauthError) {
+      case "missing_params":
+        setErrorMessage(
+          "OAuth authentication failed. Missing required parameters."
+        );
+        break;
+      case "callback_failed":
+        setErrorMessage("OAuth authentication failed. Please try again.");
+        break;
+      default:
+        setErrorMessage("Google Sign-In failed. Please try again.");
+    }
+  }
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
@@ -82,6 +99,7 @@ function LoginFormContent() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
     setErrorMessage(null);
+
     try {
       const client = new Client()
         .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
@@ -89,12 +107,15 @@ function LoginFormContent() {
 
       const account = new Account(client);
 
-      // Go to OAuth provider login page
-      account.createOAuth2Session(
-        OAuthProvider.Google, // provider
-        "https://ncc25.vercel.app/dashboard",
-        "https://ncc25.vercel.app/signup?oauth_error=true"
-      );
+      // Updated OAuth URLs to use the callback route
+      const successUrl = `${window.location.origin}/api/auth/oauth/callback`;
+      const failureUrl = `${window.location.origin}/login?oauth_error=true`;
+
+      // Create OAuth2 session - this will redirect the user
+      account.createOAuth2Session(OAuthProvider.Google, successUrl, failureUrl);
+
+      // Note: The code after this won't execute because the user will be redirected
+      // The actual session handling happens in the callback route
     } catch (error) {
       setErrorMessage("Failed to initiate Google Sign-In. Please try again.");
       console.error("Google Sign-In Error:", error);
@@ -108,7 +129,7 @@ function LoginFormContent() {
         {/* Left Side - Illustration/Branding */}
         <div className="hidden md:flex flex-col items-center justify-center p-12 bg-primary text-primary-foreground">
           <Image
-            src="/images/auth_illustration.png" // Your existing illustration
+            src="/images/auth_illustration.png"
             alt="Prayer and Community"
             width={300}
             height={300}
@@ -128,7 +149,7 @@ function LoginFormContent() {
           <div className="mb-8 text-center md:text-left">
             <Link href="/" className="inline-block mb-6">
               <Image
-                src="/images/logo.png" // Your logo
+                src="/images/logo.png"
                 alt="App Logo"
                 width={40}
                 height={40}
@@ -300,14 +321,14 @@ function LoginFormContent() {
             {isGoogleLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirecting...
+                Redirecting to Google...
               </>
             ) : (
               <>
                 <Image
-                  src="/images/google-logo.png" // Ensure you have this image
+                  src="/images/google-logo.png"
                   alt="Google"
-                  width={20} // Adjusted size to match signup form
+                  width={20}
                   height={20}
                   className="mr-2"
                 />
@@ -315,7 +336,6 @@ function LoginFormContent() {
               </>
             )}
           </Button>
-          {/* End Google Sign In */}
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
@@ -372,10 +392,8 @@ function LoginFormSkeleton() {
               <div className="w-5 h-5 bg-muted rounded"></div>
               <div className="h-4 bg-muted rounded w-1/3 ml-2"></div>
             </div>
-            <div className="h-12 bg-primary/80 rounded-md"></div>{" "}
-            {/* Sign In Button */}
+            <div className="h-12 bg-primary/80 rounded-md"></div>
           </div>
-          {/* Skeleton for OR Separator and Google Button */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/50" />
@@ -384,12 +402,9 @@ function LoginFormSkeleton() {
               <span className="bg-card px-2 h-3 w-1/4 bg-muted rounded"></span>
             </div>
           </div>
-          <div className="h-12 bg-muted/80 rounded-md border border-border/50"></div>{" "}
-          {/* Google Button Skeleton */}
-          <div className="h-4 bg-muted rounded w-1/2 mx-auto mt-8"></div>{" "}
-          {/* Create account link */}
-          <div className="h-3 bg-muted rounded w-2/3 mx-auto mt-10"></div>{" "}
-          {/* Copyright */}
+          <div className="h-12 bg-muted/80 rounded-md border border-border/50"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto mt-8"></div>
+          <div className="h-3 bg-muted rounded w-2/3 mx-auto mt-10"></div>
         </div>
       </div>
     </div>
