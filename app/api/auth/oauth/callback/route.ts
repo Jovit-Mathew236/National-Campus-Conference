@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
 
   const client = new Client()
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
-    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string);
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID as string)
+    .setKey(process.env.NEXT_PUBLIC_APPWRITE_API_KEY as string);
 
   const account = new Account(client);
 
