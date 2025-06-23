@@ -99,7 +99,6 @@ function LoginFormContent() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
     setErrorMessage(null);
-
     try {
       const client = new Client()
         .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
@@ -107,18 +106,14 @@ function LoginFormContent() {
 
       const account = new Account(client);
 
-      // Updated OAuth URLs to use the callback route
+      // Use token flow instead of session flow
       const successUrl = `${window.location.origin}/api/auth/oauth/callback`;
       const failureUrl = `${window.location.origin}/login?oauth_error=true`;
 
-      // Create OAuth2 session - this will redirect the user
-      account.createOAuth2Session(OAuthProvider.Google, successUrl, failureUrl);
-
-      // Note: The code after this won't execute because the user will be redirected
-      // The actual session handling happens in the callback route
+      account.createOAuth2Token(OAuthProvider.Google, successUrl, failureUrl);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      setErrorMessage("Failed to initiate Google Sign-In. Please try again.");
-      console.error("Google Sign-In Error:", error);
+      setErrorMessage("Failed to initiate Google Sign-In");
       setIsGoogleLoading(false);
     }
   }

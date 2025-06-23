@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     response.cookies.set("appwrite-session", session.secret, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: "strict",
       maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/dashboard",
+      path: "/",
     });
 
     return response;
