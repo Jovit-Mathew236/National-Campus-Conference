@@ -760,11 +760,12 @@ export default function MinimalPrayerDashboard() {
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
               <Avatar className="w-8 h-8 border border-gray-200">
-                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" />
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
-                  JD
+                {/* <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" /> */}
+                <AvatarFallback className="bg-blue-50 text-blue-600 text-xs">
+                  {(user?.name && user?.name.charAt(0).toUpperCase()) || "JD"}
                 </AvatarFallback>
               </Avatar>
+
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-gray-900 truncate">
                   {user?.name || "John Doe"}
