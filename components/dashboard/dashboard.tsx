@@ -935,7 +935,14 @@ export default function MinimalPrayerDashboard() {
                               of the Holy Spirit. Holy Mary, intercede for us.
                               <br />
                               <br />
-                              Lord, Bless NCC, all the participants/volunteers
+                              Lord, Bless NCC, all the{" "}
+                              <span className="font-semibold">
+                                {campusPrayerStep === 0
+                                  ? "volunteers  "
+                                  : campusPrayerStep === 1
+                                  ? "participants "
+                                  : "volunteers and participants "}
+                              </span>
                               and all campuses across India
                             </p>
                           </div>
@@ -984,8 +991,8 @@ export default function MinimalPrayerDashboard() {
                             )}
                             <span className="text-xs font-light">
                               {campusPrayerStep === 0
-                                ? "for volunteers"
-                                : "for participants"}
+                                ? "for all volunteers"
+                                : "for all participants"}
                             </span>
                           </Button>
                         ) : (

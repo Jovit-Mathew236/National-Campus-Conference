@@ -32,8 +32,24 @@ const axiforma = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "NCC 2025",
-  description: "NCC 2025",
+  title: "HOLY रास्ता | NCC 2025",
+  description: "Your journey to enlightenment starts here",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://ncc25.vercel.app/",
+    siteName: "HOLY रास्ता | NCC 2025",
+    title: "HOLY रास्ता | NCC 2025",
+    description: "Your journey to enlightenment starts here",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "HOLY रास्ता | NCC 2025",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
