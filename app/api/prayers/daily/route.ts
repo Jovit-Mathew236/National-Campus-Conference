@@ -60,6 +60,9 @@ export async function GET(request: NextRequest) {
       rosary_prayed: false,
       word_of_god_read: false,
       our_father_done: false,
+      fasting: false,
+      glory_be_to: false,
+      memorare: false,
       date: today,
     };
 
@@ -72,6 +75,9 @@ export async function GET(request: NextRequest) {
         rosary_prayed: doc.rosary_prayed || false,
         word_of_god_read: doc.word_of_god_read || false,
         our_father_done: doc.our_father_done || false,
+        fasting: doc.fasting || false,
+        glory_be_to: doc.glory_be_to || false,
+        memorare: doc.memorare || false,
         date: doc.date,
       };
     }
@@ -111,6 +117,9 @@ export async function POST(request: NextRequest) {
       rosary_prayed,
       word_of_god_read,
       our_father_done,
+      fasting,
+      glory_be_to,
+      memorare,
     } = body;
 
     // Get session cookie
@@ -158,6 +167,9 @@ export async function POST(request: NextRequest) {
       ...(rosary_prayed !== undefined && { rosary_prayed }),
       ...(word_of_god_read !== undefined && { word_of_god_read }),
       ...(our_father_done !== undefined && { our_father_done }),
+      ...(fasting !== undefined && { fasting }),
+      ...(glory_be_to !== undefined && { glory_be_to }),
+      ...(memorare !== undefined && { memorare }),
       //   updated_at: new Date().toISOString(),
     };
 
@@ -194,6 +206,9 @@ export async function POST(request: NextRequest) {
         rosary_prayed: result.rosary_prayed,
         word_of_god_read: result.word_of_god_read,
         our_father_done: result.our_father_done,
+        fasting: result.fasting,
+        glory_be_to: result.glory_be_to,
+        memorare: result.memorare,
         date: result.date,
       },
     });
@@ -236,6 +251,9 @@ export async function PUT(request: NextRequest) {
       "rosary_prayed",
       "word_of_god_read",
       "our_father_done",
+      "fasting",
+      "glory_be_to",
+      "memorare",
     ];
 
     if (!validPrayerTypes.includes(prayer_type)) {
@@ -299,6 +317,9 @@ export async function PUT(request: NextRequest) {
         rosary_prayed: false,
         word_of_god_read: false,
         our_father_done: false,
+        fasting: false,
+        glory_be_to: false,
+        memorare: false,
         [prayer_type]: completed, // Set the specific prayer type
         // created_at: new Date().toISOString(),
         // updated_at: new Date().toISOString(),
