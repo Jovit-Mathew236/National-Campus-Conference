@@ -654,7 +654,7 @@ export default function MinimalPrayerDashboard() {
               </div>
               <div>
                 <h1 className="font-semibold text-lg text-gray-900">
-                  PrayerSpace
+                  HOLY रास्ता
                 </h1>
                 <p className="text-xs text-gray-500">Your spiritual journey</p>
               </div>
@@ -739,7 +739,7 @@ export default function MinimalPrayerDashboard() {
                 </h1>
                 <p className="text-sm text-gray-500">
                   {activeTab === "dashboard"
-                    ? "Your daily spiritual journey"
+                    ? "Your journey to enlightenment starts here"
                     : activeTab === "prayers"
                     ? "Community prayer requests"
                     : `Manage ${sidebarItems
