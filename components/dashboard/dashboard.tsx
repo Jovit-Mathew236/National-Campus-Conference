@@ -21,11 +21,9 @@ import {
 import {
   Heart,
   Check,
-  Star,
   MessageCircle,
   Church,
   BookOpen,
-  Cross,
   Sparkles,
   Plus,
   Clock,
@@ -45,6 +43,10 @@ import {
   ChevronRight,
   Flame,
   Target,
+  Circle,
+  Crown,
+  Shield,
+  Minus,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -1068,7 +1070,7 @@ export default function MinimalPrayerDashboard() {
                         },
                         {
                           key: "fasting",
-                          icon: Star,
+                          icon: Minus, // or UtensilsCrossed if available
                           label: "Fasting",
                           description: "Skip something for NCC",
                         },
@@ -1080,26 +1082,26 @@ export default function MinimalPrayerDashboard() {
                         },
                         {
                           key: "memorare",
-                          icon: BookOpen,
-                          label: " Protection Prayer",
+                          icon: Shield, // Protection symbol
+                          label: "Protection Prayer",
                           description:
                             "Recite Psalms 91 or Prayer to St. Micheal the Archangel",
                         },
                         {
                           key: "our_father_done",
-                          icon: Cross,
+                          icon: Heart, // or Hands if available
                           label: "Our Father",
                           description: "Pray the Lord's Prayer",
                         },
                         {
                           key: "rosary_prayed",
-                          icon: Cross,
+                          icon: Circle, // Represents rosary beads
                           label: "3 Hail Mary",
                           description: "Let's be to with mamma Mary",
                         },
                         {
                           key: "glory_be_to",
-                          icon: Cross,
+                          icon: Crown, // Symbol of glory/Trinity
                           label: "5 Glory be to",
                           description: "Let's adore the Holy Trinity",
                         },
