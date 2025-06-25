@@ -38,9 +38,9 @@ import {
   X,
   Home,
   MessageSquare,
-  Calendar,
-  Settings,
-  TrendingUp,
+  // Calendar,
+  // Settings,
+  // TrendingUp,
   Award,
   ChevronRight,
   Flame,
@@ -70,6 +70,7 @@ const initialChecklistState: Record<ChecklistItemKey, boolean> = {
 
 interface DailyActivityData {
   campus_prayer_done: boolean;
+  campus_prayer_participants_done_2: boolean;
   mass_attended: boolean;
   rosary_prayed: boolean;
   word_of_god_read: boolean;
@@ -118,7 +119,7 @@ export default function MinimalPrayerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [dailyCampusPrayerDone, setDailyCampusPrayerDone] = useState(false);
+  // const [dailyCampusPrayerDone, setDailyCampusPrayerDone] = useState(false);
   const [spiritualChecklist, setSpiritualChecklist] = useState(
     initialChecklistState
   );
@@ -143,6 +144,10 @@ export default function MinimalPrayerDashboard() {
   const [newPrayerIsAnonymous, setNewPrayerIsAnonymous] = useState(false);
   const [prayerWallHasMore, setPrayerWallHasMore] = useState(true);
   const [prayerWallLoadingMore, setPrayerWallLoadingMore] = useState(false);
+  // Add these new state variables
+  const [campusPrayerStep, setCampusPrayerStep] = useState(0); // 0: not started, 1: volunteers done, 2: both done
+  const [userStreak, setUserStreak] = useState(0); // Dynamic streak from backend
+  const [streakLoading, setStreakLoading] = useState(true);
 
   // --- API HELPER FUNCTIONS ---
   const loadDailyActivityData = useCallback(async () => {
@@ -154,7 +159,16 @@ export default function MinimalPrayerDashboard() {
       if (response.ok) {
         const result = await response.json();
         const data: DailyActivityData = result.data;
-        setDailyCampusPrayerDone(data.campus_prayer_done);
+
+        // Determine campus prayer step based on data
+        if (data.campus_prayer_done && data.campus_prayer_participants_done_2) {
+          setCampusPrayerStep(2); // Both completed
+        } else if (data.campus_prayer_done) {
+          setCampusPrayerStep(1); // Only volunteers completed
+        } else {
+          setCampusPrayerStep(0); // None completed
+        }
+
         setSpiritualChecklist({
           mass_attended: data.mass_attended,
           rosary_prayed: data.rosary_prayed,
@@ -169,6 +183,26 @@ export default function MinimalPrayerDashboard() {
       }
     } catch (error) {
       console.error("Error loading daily activity data:", error);
+    }
+  }, []);
+
+  const loadUserStreak = useCallback(async () => {
+    setStreakLoading(true);
+    try {
+      const response = await fetch("/api/prayers/streak", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserStreak(data.data.streak);
+      } else {
+        console.error("Failed to load user streak");
+      }
+    } catch (error) {
+      console.error("Error loading user streak:", error);
+    } finally {
+      setStreakLoading(false);
     }
   }, []);
 
@@ -196,6 +230,13 @@ export default function MinimalPrayerDashboard() {
     async (updates: Partial<DailyActivityData>) => {
       if (updates.hasOwnProperty("campus_prayer_done")) {
         setDailyPrayerSaving(true);
+      } else if (updates.hasOwnProperty("campus_prayer_participants_done_2")) {
+        setDailyPrayerSaving(true);
+        if (campusPrayerStep === 0) {
+          setCampusPrayerStep(1); // Update step to volunteers done
+        } else if (campusPrayerStep === 1) {
+          setCampusPrayerStep(2); // Update step to both done
+        }
       } else {
         setChecklistSaving(true);
       }
@@ -277,6 +318,7 @@ export default function MinimalPrayerDashboard() {
         loadDailyCampusPrayerCount(),
         loadPrayerRequestsFromApi(0, false),
         loadPrayerWallStatsFromApi(),
+        loadUserStreak(), // Add this
       ]);
       setPageLoading(false);
       setPrayerWallLoading(false);
@@ -287,41 +329,64 @@ export default function MinimalPrayerDashboard() {
     loadDailyCampusPrayerCount,
     loadPrayerRequestsFromApi,
     loadPrayerWallStatsFromApi,
+    loadUserStreak, // Add this
   ]);
 
   // --- EVENT HANDLERS ---
   const handleAmenClick = useCallback(async () => {
-    const success = await updateDailyActivityApi({ campus_prayer_done: true });
-    if (success) {
-      setDailyCampusPrayerDone(true);
-      setDailyCampusPrayerCount((prev) => prev + 1);
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = {
-        startVelocity: 30,
-        spread: 360,
-        ticks: 60,
-        zIndex: 1000,
-      };
-      const randomInRange = (min: number, max: number) =>
-        Math.random() * (max - min) + min;
-      const intervalId = window.setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return window.clearInterval(intervalId);
-        const particleCount = 50 * (timeLeft / duration);
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        });
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        });
-      }, 250);
+    let updateData = {};
+    let newStep = campusPrayerStep;
+
+    if (campusPrayerStep === 0) {
+      // First click - pray for volunteers
+      updateData = { campus_prayer_done: true };
+      newStep = 1;
+    } else if (campusPrayerStep === 1) {
+      // Second click - pray for participants
+      updateData = { campus_prayer_participants_done_2: true };
+      newStep = 2;
     }
-  }, [updateDailyActivityApi]);
+
+    const success = await updateDailyActivityApi(updateData);
+    if (success) {
+      setCampusPrayerStep(newStep);
+
+      // ✅ Only increment count when BOTH prayers are completed (newStep === 2)
+      if (newStep === 2) {
+        setDailyCampusPrayerCount((prev) => prev + 1);
+
+        // Confetti animation code here
+        const duration = 3 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = {
+          startVelocity: 30,
+          spread: 360,
+          ticks: 60,
+          zIndex: 1000,
+        };
+        const randomInRange = (min: number, max: number) =>
+          Math.random() * (max - min) + min;
+        const intervalId = window.setInterval(() => {
+          const timeLeft = animationEnd - Date.now();
+          if (timeLeft <= 0) return window.clearInterval(intervalId);
+          const particleCount = 50 * (timeLeft / duration);
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          });
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          });
+        }, 250);
+
+        // Reload streak after completing both prayers
+        loadUserStreak();
+      }
+    }
+  }, [campusPrayerStep, updateDailyActivityApi, loadUserStreak]);
 
   const toggleChecklistItem = useCallback(
     async (itemKey: ChecklistItemKey) => {
@@ -515,10 +580,10 @@ export default function MinimalPrayerDashboard() {
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "prayers", label: "Prayer Wall", icon: MessageSquare },
-    { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "stats", label: "Statistics", icon: TrendingUp },
-    { id: "achievements", label: "Achievements", icon: Award },
-    { id: "settings", label: "Settings", icon: Settings },
+    // { id: "calendar", label: "Calendar", icon: Calendar },
+    // { id: "stats", label: "Statistics", icon: TrendingUp },
+    // { id: "achievements", label: "Achievements", icon: Award },
+    // { id: "settings", label: "Settings", icon: Settings },
   ];
 
   // --- RENDER ---
@@ -761,7 +826,7 @@ export default function MinimalPrayerDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm font-medium">
-                          Today&apos;s Prayers
+                          Today&apos;s Total Prayers
                         </p>
                         <p className="text-2xl font-semibold text-gray-900">
                           {dailyCampusPrayerCount}
@@ -782,7 +847,11 @@ export default function MinimalPrayerDashboard() {
                           Your Streak
                         </p>
                         <p className="text-2xl font-semibold text-gray-900">
-                          7 Days
+                          {streakLoading ? (
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                          ) : (
+                            `${userStreak} Days`
+                          )}
                         </p>
                       </div>
                       <div className="p-3 bg-blue-50 rounded-lg">
@@ -791,7 +860,9 @@ export default function MinimalPrayerDashboard() {
                     </div>
                     <div className="mt-4 flex items-center text-gray-500 text-sm">
                       <Target className="w-4 h-4 mr-1" />
-                      Keep it up!
+                      {userStreak > 0
+                        ? "Keep it up!"
+                        : "Start your streak today!"}
                     </div>
                   </CardContent>
                 </Card>
@@ -835,7 +906,7 @@ export default function MinimalPrayerDashboard() {
                     </div>
                     <div className="mt-4 flex items-center text-gray-500 text-sm">
                       <MessageCircle className="w-4 h-4 mr-1" />
-                      Total prayers offered
+                      Total prayers offered in prayer wall
                     </div>
                   </CardContent>
                 </Card>
@@ -843,6 +914,7 @@ export default function MinimalPrayerDashboard() {
 
               <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
+                  {/* Campus Prayer Card */}
                   {/* Campus Prayer Card */}
                   <Card className="border border-gray-200">
                     <CardContent className="p-8 text-center">
@@ -862,7 +934,9 @@ export default function MinimalPrayerDashboard() {
                               of the Father, Grace of Christ and the Anointing
                               of the Holy Spirit. Holy Mary, intercede for us.
                               <br />
-                              Lord, Bless NCC and all the campuses in India
+                              <br />
+                              Lord, Bless NCC, all the participants/volunteers
+                              and all campuses across India
                             </p>
                           </div>
                           <div className="flex items-center justify-center gap-3 mt-6">
@@ -878,12 +952,24 @@ export default function MinimalPrayerDashboard() {
                             </div>
                           </div>
                         </div>
-                        {!dailyCampusPrayerDone ? (
+
+                        {/* Progress indicator for two-step prayer */}
+                        {campusPrayerStep > 0 && campusPrayerStep < 2 && (
+                          <div className="flex items-center justify-center space-x-2">
+                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                            <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                            <span className="text-sm text-gray-500 ml-2">
+                              Step {campusPrayerStep} of 2
+                            </span>
+                          </div>
+                        )}
+
+                        {campusPrayerStep < 2 ? (
                           <Button
                             onClick={handleAmenClick}
                             disabled={dailyPrayerSaving}
                             size="lg"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 h-auto rounded-full font-semibold text-lg"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 h-auto rounded-full font-semibold text-lg flex flex-col items-center justify-center m-auto w-full sm:w-auto gap-0"
                           >
                             {dailyPrayerSaving ? (
                               <>
@@ -891,25 +977,42 @@ export default function MinimalPrayerDashboard() {
                                 Saving...
                               </>
                             ) : (
-                              <>
-                                <span className="text-xl mr-2">🙏</span>
+                              <p>
+                                {/* <span className="text-xl mr-2">🙏</span> */}
                                 AMEN
-                              </>
+                              </p>
                             )}
+                            <span className="text-xs font-light">
+                              {campusPrayerStep === 0
+                                ? "for volunteers"
+                                : "for participants"}
+                            </span>
                           </Button>
                         ) : (
                           <div className="space-y-4">
                             <div className="flex items-center justify-center space-x-4">
-                              <div className="p-2 bg-blue-600 rounded-full">
+                              {/* <div className="p-2 bg-blue-600 rounded-full">
                                 <Check className="w-6 h-6 text-white" />
-                              </div>
+                              </div> */}
                               <span className="text-xl font-semibold text-gray-900">
-                                Prayer Completed!
+                                Prayers Completed!
                               </span>
                             </div>
-                            <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-6 py-2">
-                              ✨ Well done! ✨
-                            </Badge>
+                            <div className="space-y-3 flex flex-wrap w-full m-auto justify-center items-center gap-1">
+                              <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-6 py-2 mb-0 h-10 w-40">
+                                ✨ Well done! ✨
+                              </Badge>
+                              <Button
+                                onClick={() => {
+                                  setActiveTab("prayers");
+                                  setSidebarOpen(false);
+                                }}
+                                variant="outline"
+                                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-10 w-40"
+                              >
+                                Visit Prayer Wall
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -970,8 +1073,9 @@ export default function MinimalPrayerDashboard() {
                         {
                           key: "memorare",
                           icon: BookOpen,
-                          label: "Memorare",
-                          description: "Recite the Memorare prayer",
+                          label: " Protection Prayer",
+                          description:
+                            "Recite Psalms 91 or Prayer to St. Micheal the Archangel",
                         },
                         {
                           key: "our_father_done",

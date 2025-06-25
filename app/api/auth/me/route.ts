@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
 
     console.log("Attempting to get user with session...");
     const user = await account.get();
+    console.log("User retrieved successfully:", user);
+
     console.log("User retrieved successfully:", user.email);
 
     return NextResponse.json({

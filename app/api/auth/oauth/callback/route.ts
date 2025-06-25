@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     // Create session
     const account = new Account(sessionClient);
     const session = await account.createSession(userId, secret);
+    console.log("session created:", session);
 
     // Create authenticated client for user operations
     const authenticatedClient = new Client()
@@ -56,6 +57,8 @@ export async function GET(request: NextRequest) {
 
       const email = user.email;
       const name = user.name;
+      const profilePicture =
+        user.prefs?.profilePicture || "https://via.placeholder.com/150";
 
       try {
         await databases.createDocument(
@@ -66,7 +69,7 @@ export async function GET(request: NextRequest) {
             user_id: user.$id, // ✅ Use Appwrite user ID as reference
             email: email,
             display_name: name,
-            pro_pic: "https://via.placeholder.com/150",
+            pro_pic: profilePicture,
             joined_date: new Date().toISOString(),
           }
         );

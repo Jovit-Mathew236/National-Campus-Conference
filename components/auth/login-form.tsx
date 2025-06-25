@@ -110,7 +110,12 @@ function LoginFormContent() {
       const successUrl = `${window.location.origin}/api/auth/oauth/callback`;
       const failureUrl = `${window.location.origin}/login?oauth_error=true`;
 
-      account.createOAuth2Token(OAuthProvider.Google, successUrl, failureUrl);
+      account.createOAuth2Token(OAuthProvider.Google, successUrl, failureUrl, [
+        "openid",
+        "email",
+        "profile",
+        "https://www.googleapis.com/auth/userinfo.profile",
+      ]);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setErrorMessage("Failed to initiate Google Sign-In");

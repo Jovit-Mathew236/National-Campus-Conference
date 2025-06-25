@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
 
     let dailyPrayerData = {
       campus_prayer_done: false,
+      campus_prayer_participants_done_2: false,
       mass_attended: false,
       rosary_prayed: false,
       word_of_god_read: false,
@@ -71,6 +72,8 @@ export async function GET(request: NextRequest) {
       const doc = dailyPrayerQuery.documents[0];
       dailyPrayerData = {
         campus_prayer_done: doc.campus_prayer_done || false,
+        campus_prayer_participants_done_2:
+          doc.campus_prayer_participants_done_2 || false,
         mass_attended: doc.mass_attended || false,
         rosary_prayed: doc.rosary_prayed || false,
         word_of_god_read: doc.word_of_god_read || false,
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       campus_prayer_done,
+      campus_prayer_participants_done_2,
       mass_attended,
       rosary_prayed,
       word_of_god_read,
@@ -163,6 +167,9 @@ export async function POST(request: NextRequest) {
       user_id: user.$id,
       date: today,
       ...(campus_prayer_done !== undefined && { campus_prayer_done }),
+      ...(campus_prayer_participants_done_2 !== undefined && {
+        campus_prayer_participants_done_2,
+      }),
       ...(mass_attended !== undefined && { mass_attended }),
       ...(rosary_prayed !== undefined && { rosary_prayed }),
       ...(word_of_god_read !== undefined && { word_of_god_read }),
@@ -202,6 +209,8 @@ export async function POST(request: NextRequest) {
       message: "Daily prayer data updated successfully",
       data: {
         campus_prayer_done: result.campus_prayer_done,
+        campus_prayer_participants_done_2:
+          result.campus_prayer_participants_done_2,
         mass_attended: result.mass_attended,
         rosary_prayed: result.rosary_prayed,
         word_of_god_read: result.word_of_god_read,
@@ -247,6 +256,7 @@ export async function PUT(request: NextRequest) {
     // Validate prayer_type
     const validPrayerTypes = [
       "campus_prayer_done",
+      "campus_prayer_participants_done_2",
       "mass_attended",
       "rosary_prayed",
       "word_of_god_read",
@@ -313,6 +323,7 @@ export async function PUT(request: NextRequest) {
         user_id: user.$id,
         date: today,
         campus_prayer_done: false,
+        campus_prayer_participants_done_2: false,
         mass_attended: false,
         rosary_prayed: false,
         word_of_god_read: false,
