@@ -36,9 +36,6 @@ import {
   X,
   Home,
   MessageSquare,
-  // Calendar,
-  // Settings,
-  // TrendingUp,
   Award,
   ChevronRight,
   Flame,
@@ -121,7 +118,6 @@ export default function MinimalPrayerDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
-  // const [dailyCampusPrayerDone, setDailyCampusPrayerDone] = useState(false);
   const [spiritualChecklist, setSpiritualChecklist] = useState(
     initialChecklistState
   );
@@ -146,9 +142,8 @@ export default function MinimalPrayerDashboard() {
   const [newPrayerIsAnonymous, setNewPrayerIsAnonymous] = useState(false);
   const [prayerWallHasMore, setPrayerWallHasMore] = useState(true);
   const [prayerWallLoadingMore, setPrayerWallLoadingMore] = useState(false);
-  // Add these new state variables
-  const [campusPrayerStep, setCampusPrayerStep] = useState(0); // 0: not started, 1: volunteers done, 2: both done
-  const [userStreak, setUserStreak] = useState(0); // Dynamic streak from backend
+  const [campusPrayerStep, setCampusPrayerStep] = useState(0);
+  const [userStreak, setUserStreak] = useState(0);
   const [streakLoading, setStreakLoading] = useState(true);
 
   // --- API HELPER FUNCTIONS ---
@@ -162,13 +157,12 @@ export default function MinimalPrayerDashboard() {
         const result = await response.json();
         const data: DailyActivityData = result.data;
 
-        // Determine campus prayer step based on data
         if (data.campus_prayer_done && data.campus_prayer_participants_done_2) {
-          setCampusPrayerStep(2); // Both completed
+          setCampusPrayerStep(2);
         } else if (data.campus_prayer_done) {
-          setCampusPrayerStep(1); // Only volunteers completed
+          setCampusPrayerStep(1);
         } else {
-          setCampusPrayerStep(0); // None completed
+          setCampusPrayerStep(0);
         }
 
         setSpiritualChecklist({
@@ -235,9 +229,9 @@ export default function MinimalPrayerDashboard() {
       } else if (updates.hasOwnProperty("campus_prayer_participants_done_2")) {
         setDailyPrayerSaving(true);
         if (campusPrayerStep === 0) {
-          setCampusPrayerStep(1); // Update step to volunteers done
+          setCampusPrayerStep(1);
         } else if (campusPrayerStep === 1) {
-          setCampusPrayerStep(2); // Update step to both done
+          setCampusPrayerStep(2);
         }
       } else {
         setChecklistSaving(true);
@@ -260,7 +254,7 @@ export default function MinimalPrayerDashboard() {
         setChecklistSaving(false);
       }
     },
-    []
+    [campusPrayerStep]
   );
 
   const loadPrayerRequestsFromApi = useCallback(
@@ -320,7 +314,7 @@ export default function MinimalPrayerDashboard() {
         loadDailyCampusPrayerCount(),
         loadPrayerRequestsFromApi(0, false),
         loadPrayerWallStatsFromApi(),
-        loadUserStreak(), // Add this
+        loadUserStreak(),
       ]);
       setPageLoading(false);
       setPrayerWallLoading(false);
@@ -331,7 +325,7 @@ export default function MinimalPrayerDashboard() {
     loadDailyCampusPrayerCount,
     loadPrayerRequestsFromApi,
     loadPrayerWallStatsFromApi,
-    loadUserStreak, // Add this
+    loadUserStreak,
   ]);
 
   // --- EVENT HANDLERS ---
@@ -340,11 +334,9 @@ export default function MinimalPrayerDashboard() {
     let newStep = campusPrayerStep;
 
     if (campusPrayerStep === 0) {
-      // First click - pray for volunteers
       updateData = { campus_prayer_done: true };
       newStep = 1;
     } else if (campusPrayerStep === 1) {
-      // Second click - pray for participants
       updateData = { campus_prayer_participants_done_2: true };
       newStep = 2;
     }
@@ -353,11 +345,9 @@ export default function MinimalPrayerDashboard() {
     if (success) {
       setCampusPrayerStep(newStep);
 
-      // ✅ Only increment count when BOTH prayers are completed (newStep === 2)
       if (newStep === 2) {
         setDailyCampusPrayerCount((prev) => prev + 1);
 
-        // Confetti animation code here
         const duration = 3 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = {
@@ -384,7 +374,6 @@ export default function MinimalPrayerDashboard() {
           });
         }, 250);
 
-        // Reload streak after completing both prayers
         loadUserStreak();
       }
     }
@@ -582,23 +571,21 @@ export default function MinimalPrayerDashboard() {
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "prayers", label: "Prayer Wall", icon: MessageSquare },
-    // { id: "calendar", label: "Calendar", icon: Calendar },
-    // { id: "stats", label: "Statistics", icon: TrendingUp },
-    // { id: "achievements", label: "Achievements", icon: Award },
-    // { id: "settings", label: "Settings", icon: Settings },
   ];
 
   // --- RENDER ---
   if (pageLoading || (prayerWallLoading && prayerRequests.length === 0)) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-          <div className="space-y-1">
-            <h2 className="text-xl font-medium text-gray-900">
-              Loading your prayer journey...
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 mx-auto bg-[#0791c4] rounded-2xl flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Loading your prayer journey
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-[#faaf36] font-medium">
               Preparing your spiritual dashboard
             </p>
           </div>
@@ -612,37 +599,37 @@ export default function MinimalPrayerDashboard() {
       {prayerRequests.map((request, index) => (
         <div key={request.id + (isFullPage ? "-full" : "-dash")}>
           <div
-            className={`space-y-3 ${
+            className={`space-y-4 ${
               isFullPage
-                ? "p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                ? "p-6 rounded-xl border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200"
                 : ""
             }`}
           >
-            <div className="flex items-start space-x-3">
-              <Avatar className="w-8 h-8 border border-gray-200">
+            <div className="flex items-start space-x-4">
+              <Avatar className="w-10 h-10 border-2 border-[#faaf36]">
                 {request.avatar && !request.isAnonymous ? (
                   <AvatarImage src={request.avatar} alt={request.user} />
                 ) : null}
-                <AvatarFallback className="bg-blue-50 text-blue-600 text-xs">
+                <AvatarFallback className="bg-[#0791c4] text-white text-sm font-medium">
                   {request.isAnonymous
                     ? "🙏"
                     : request.user.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-                  <span className="font-medium text-gray-900">
+              <div className="flex-1 space-y-3">
+                <div className="flex flex-wrap sm:flex-row sm:items-center gap-2 text-sm">
+                  <span className="font-semibold text-gray-900">
                     {request.isAnonymous ? "Anonymous" : request.user}
                   </span>
                   <Badge
                     variant="outline"
-                    className="text-xs border-gray-200 text-gray-500 self-start sm:self-center"
+                    className="text-xs border-[#faaf36] text-[#faaf36] bg-[#faaf36]/5 self-start sm:self-center"
                   >
                     <Clock className="w-3 h-3 mr-1" />
                     {request.createdAt}
                   </Badge>
                 </div>
-                <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {request.message}
                 </p>
                 <div className="flex items-center justify-between pt-2">
@@ -650,14 +637,14 @@ export default function MinimalPrayerDashboard() {
                     variant={request.userPrayed ? "default" : "outline"}
                     size="sm"
                     onClick={() => handlePrayerReactionApi(request.id)}
-                    className={`text-xs py-1 px-2 transition-colors ${
+                    className={`transition-all duration-200 ${
                       request.userPrayed
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                        ? "bg-[#0791c4] hover:bg-[#0791c4]/90 text-white border-[#0791c4]"
+                        : "border-[#faaf36] text-[#0791c4] hover:bg-[#faaf36]/10 hover:border-[#faaf36]"
                     }`}
                   >
                     <Heart
-                      className={`w-3 h-3 mr-1 ${
+                      className={`w-4 h-4 mr-2 ${
                         request.userPrayed ? "fill-current" : ""
                       }`}
                     />
@@ -666,7 +653,7 @@ export default function MinimalPrayerDashboard() {
                   </Button>
                   <Badge
                     variant="outline"
-                    className="text-xs border-blue-200 text-blue-600"
+                    className="border-gray-200 text-gray-600 bg-gray-50"
                   >
                     <Heart className="w-3 h-3 mr-1" />
                     {request.prayerCount} {isFullPage ? "prayers" : ""}
@@ -675,13 +662,15 @@ export default function MinimalPrayerDashboard() {
               </div>
             </div>
           </div>
-          {index < prayerRequests.length - 1 && <Separator className="my-4" />}
+          {index < prayerRequests.length - 1 && (
+            <Separator className="my-6 border-gray-100" />
+          )}
         </div>
       ))}
       {prayerWallHasMore && (
         <Button
           variant="outline"
-          className="w-full mt-4 text-sm border-blue-200 text-blue-600 hover:bg-blue-50"
+          className="w-full mt-6 border-[#faaf36] text-[#0791c4] hover:bg-[#faaf36]/10"
           onClick={handlePrayerWallLoadMore}
           disabled={prayerWallLoadingMore || prayerWallRefreshing}
         >
@@ -701,42 +690,44 @@ export default function MinimalPrayerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {(dailyPrayerSaving || checklistSaving) && (
-        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-          <span className="text-sm text-gray-700">Saving...</span>
+        <div className="fixed top-6 right-6 z-50 bg-white border border-[#faaf36] rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+          <div className="w-5 h-5 bg-[#0791c4] rounded-full flex items-center justify-center">
+            <Loader2 className="w-3 h-3 text-white animate-spin" />
+          </div>
+          <span className="text-sm font-medium text-gray-700">Saving...</span>
         </div>
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between p-8 border-b border-gray-100">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-[#0791c4] rounded-xl flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg text-gray-900">
-                  HOLY रास्ता
-                </h1>
-                <p className="text-xs text-gray-500">Your spiritual journey</p>
+                <h1 className="font-bold text-xl text-gray-900">HOLY रास्ता</h1>
+                <p className="text-sm text-[#faaf36] font-medium">
+                  Your spiritual journey
+                </p>
               </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden"
+              className="lg:hidden hover:bg-gray-100"
               onClick={() => setSidebarOpen(false)}
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-gray-500" />
             </Button>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-6 space-y-2">
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
@@ -744,41 +735,45 @@ export default function MinimalPrayerDashboard() {
                   setActiveTab(item.id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                   activeTab === item.id
-                    ? "bg-blue-50 text-blue-700 border border-blue-100"
+                    ? "bg-[#0791c4] text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon
+                  className={`w-5 h-5 ${
+                    activeTab === item.id ? "text-white" : "text-[#faaf36]"
+                  }`}
+                />
                 <span className="font-medium">{item.label}</span>
                 {activeTab === item.id && (
-                  <ChevronRight className="w-4 h-4 ml-auto" />
+                  <ChevronRight className="w-4 h-4 ml-auto text-white" />
                 )}
               </button>
             ))}
           </nav>
 
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-              <Avatar className="w-8 h-8 border border-gray-200">
-                {/* <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" /> */}
-                <AvatarFallback className="bg-blue-50 text-blue-600 text-xs">
+          <div className="p-6 border-t border-gray-100">
+            <div className="flex items-center space-x-4 p-4 rounded-xl bg-gray-50">
+              <Avatar className="w-10 h-10 border-2 border-[#faaf36]">
+                <AvatarFallback className="bg-[#0791c4] text-white font-medium">
                   {(user?.name && user?.name.charAt(0).toUpperCase()) || "JD"}
                 </AvatarFallback>
               </Avatar>
-
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">
+                <p className="font-semibold text-gray-900 truncate">
                   {user?.name || "John Doe"}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <p className="text-sm text-[#faaf36] truncate font-medium">
+                  {user?.email}
+                </p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-400 hover:text-red-600 p-2"
+                className="text-gray-400 hover:text-red-600 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -788,24 +783,24 @@ export default function MinimalPrayerDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64 min-h-screen">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center space-x-4">
+      <div className="lg:ml-72 min-h-screen">
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+          <div className="flex items-center justify-between px-8 py-6">
+            <div className="flex items-center space-x-6">
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden"
+                className="lg:hidden hover:bg-gray-100"
                 onClick={() => setSidebarOpen(true)}
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 text-gray-600" />
               </Button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900">
                   {sidebarItems.find((item) => item.id === activeTab)?.label ||
                     "Dashboard"}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-[#faaf36] text-xs sm:text-sm font-medium mt-1">
                   {activeTab === "dashboard"
                     ? "Your journey to enlightenment starts here"
                     : activeTab === "prayers"
@@ -824,45 +819,48 @@ export default function MinimalPrayerDashboard() {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border border-gray-200">
+                <Card className="border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-500 text-sm font-medium">
+                        <p className="text-gray-500 text-sm font-medium mb-2">
                           Today&apos;s Total Prayers
                         </p>
-                        <p className="text-2xl font-semibold text-gray-900">
+                        <p className="text-3xl font-bold text-gray-900">
                           {dailyCampusPrayerCount}
                         </p>
                       </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <Users className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-[#0791c4] rounded-xl flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border border-gray-200">
+                <Card className="border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-500 text-sm font-medium">
+                        <p className="text-gray-500 text-sm font-medium mb-2">
                           Your Streak
                         </p>
-                        <p className="text-2xl font-semibold text-gray-900">
+                        <p className="text-3xl font-bold text-gray-900">
                           {streakLoading ? (
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                            <Loader2 className="w-8 h-8 animate-spin text-[#0791c4]" />
                           ) : (
-                            `${userStreak} Days`
+                            `${userStreak}`
                           )}
                         </p>
+                        {!streakLoading && (
+                          <p className="text-sm text-gray-500 mt-1">Days</p>
+                        )}
                       </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <Flame className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-[#faaf36] rounded-xl flex items-center justify-center">
+                        <Flame className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                    <div className="mt-4 flex items-center text-gray-500 text-sm">
-                      <Target className="w-4 h-4 mr-1" />
+                    <div className="mt-4 flex items-center text-[#faaf36] text-sm font-medium">
+                      <Target className="w-4 h-4 mr-2" />
                       {userStreak > 0
                         ? "Keep it up!"
                         : "Start your streak today!"}
@@ -870,46 +868,46 @@ export default function MinimalPrayerDashboard() {
                   </CardContent>
                 </Card>
 
-                <Card className="border border-gray-200">
+                <Card className="border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-500 text-sm font-medium">
+                        <p className="text-gray-500 text-sm font-medium mb-2">
                           Completed
                         </p>
-                        <p className="text-2xl font-semibold text-gray-900">
+                        <p className="text-3xl font-bold text-gray-900">
                           {checklistCompletedCount}/{checklistTotalCount}
                         </p>
                       </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <Check className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-[#28bce7] rounded-xl flex items-center justify-center">
+                        <Check className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                    <div className="mt-4 flex items-center text-gray-500 text-sm">
-                      <Award className="w-4 h-4 mr-1" />
+                    <div className="mt-4 flex items-center text-[#faaf36] text-sm font-medium">
+                      <Award className="w-4 h-4 mr-2" />
                       {Math.round(checklistProgressPercentage)}% today
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border border-gray-200">
+                <Card className="border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-500 text-sm font-medium">
+                        <p className="text-gray-500 text-sm font-medium mb-2">
                           Community
                         </p>
-                        <p className="text-2xl font-semibold text-gray-900">
+                        <p className="text-3xl font-bold text-gray-900">
                           {prayerWallStats.totalPrayers}
                         </p>
                       </div>
-                      <div className="p-3 bg-blue-50 rounded-lg">
-                        <Heart className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-[#0791c4] rounded-xl flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                    <div className="mt-4 flex items-center text-gray-500 text-sm">
-                      <MessageCircle className="w-4 h-4 mr-1" />
-                      Total prayers offered in prayer wall
+                    <div className="mt-4 flex items-center text-[#faaf36] text-sm font-medium">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Total prayers offered
                     </div>
                   </CardContent>
                 </Card>
@@ -918,57 +916,56 @@ export default function MinimalPrayerDashboard() {
               <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                   {/* Campus Prayer Card */}
-                  {/* Campus Prayer Card */}
-                  <Card className="border border-gray-200">
+                  <Card className="border border-gray-100 shadow-sm">
                     <CardContent className="p-8 text-center">
-                      <div className="space-y-6">
+                      <div className="space-y-8">
                         <div className="flex justify-center">
-                          <div className="p-4 bg-blue-50 rounded-full">
-                            <Sparkles className="w-8 h-8 text-blue-600" />
+                          <div className="w-16 h-16 bg-[#faaf36]/10 rounded-2xl flex items-center justify-center">
+                            <Sparkles className="w-8 h-8 text-[#faaf36]" />
                           </div>
                         </div>
-                        <div className="space-y-4">
-                          <h2 className="text-2xl font-semibold text-gray-900">
+                        <div className="space-y-6">
+                          <h2 className="text-3xl font-bold text-gray-900">
                             Campus Prayer
                           </h2>
                           <div className="max-w-2xl mx-auto">
-                            <p className="text-gray-600 leading-relaxed">
+                            <p className="text-gray-600 leading-relaxed text-lg">
                               Oh Lord, Let the Campuses be filled with the Love
                               of the Father, Grace of Christ and the Anointing
                               of the Holy Spirit. Holy Mary, intercede for us.
                               <br />
                               <br />
                               Lord, Bless NCC, all the{" "}
-                              <span className="font-semibold">
+                              <span className="font-semibold text-[#faaf36]">
                                 {campusPrayerStep === 0
-                                  ? "volunteers  "
+                                  ? "volunteers"
                                   : campusPrayerStep === 1
-                                  ? "participants "
-                                  : "volunteers and participants "}
-                              </span>
+                                  ? "participants"
+                                  : "volunteers and participants"}
+                              </span>{" "}
                               and all campuses across India
                             </p>
                           </div>
-                          <div className="flex items-center justify-center gap-3 mt-6">
-                            <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2">
-                              <Users className="w-4 h-4 text-blue-600" />
+                          <div className="flex items-center justify-center">
+                            <div className="flex items-center gap-3 bg-gray-50 rounded-full px-6 py-3">
+                              <Users className="w-5 h-5 text-[#0791c4]" />
                               {countLoading ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                <Loader2 className="w-5 h-5 animate-spin text-[#0791c4]" />
                               ) : (
-                                <span className="font-medium text-gray-700">
-                                  {dailyCampusPrayerCount} people prayed
+                                <span className="font-semibold text-gray-700">
+                                  {dailyCampusPrayerCount} people prayed today
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Progress indicator for two-step prayer */}
+                        {/* Progress indicator */}
                         {campusPrayerStep > 0 && campusPrayerStep < 2 && (
-                          <div className="flex items-center justify-center space-x-2">
-                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-                            <span className="text-sm text-gray-500 ml-2">
+                          <div className="flex items-center justify-center space-x-3">
+                            <div className="w-3 h-3 bg-[#faaf36] rounded-full"></div>
+                            <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                            <span className="text-sm text-[#faaf36] ml-3 font-medium">
                               Step {campusPrayerStep} of 2
                             </span>
                           </div>
@@ -979,32 +976,28 @@ export default function MinimalPrayerDashboard() {
                             onClick={handleAmenClick}
                             disabled={dailyPrayerSaving}
                             size="lg"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 h-auto rounded-full font-semibold text-lg flex flex-col items-center justify-center m-auto w-full sm:w-auto gap-0"
+                            className="bg-[#0791c4] hover:bg-[#0791c4]/90 text-white px-12 py-4 h-auto rounded-2xl font-bold text-xl shadow-sm"
                           >
                             {dailyPrayerSaving ? (
                               <>
-                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
                                 Saving...
                               </>
                             ) : (
-                              <p>
-                                {/* <span className="text-xl mr-2">🙏</span> */}
-                                AMEN
-                              </p>
+                              <div className="flex flex-col items-center">
+                                <span>AMEN</span>
+                                <span className="text-sm font-normal text-[#28bce7] mt-1">
+                                  {campusPrayerStep === 0
+                                    ? "for all volunteers"
+                                    : "for all participants"}
+                                </span>
+                              </div>
                             )}
-                            <span className="text-xs font-light">
-                              {campusPrayerStep === 0
-                                ? "for all volunteers"
-                                : "for all participants"}
-                            </span>
                           </Button>
                         ) : (
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-center space-x-4">
-                              {/* <div className="p-2 bg-blue-600 rounded-full">
-                                <Check className="w-6 h-6 text-white" />
-                              </div> */}
-                              <span className="text-xl font-semibold text-gray-900">
+                          <div className="space-y-6">
+                            <div className="text-center">
+                              <span className="text-2xl font-bold text-gray-900">
                                 Prayers Completed!
                               </span>
                             </div>
@@ -1034,29 +1027,31 @@ export default function MinimalPrayerDashboard() {
                     <CardHeader className="pb-6">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <CardTitle className="text-xl font-semibold flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 rounded-lg">
+                          <div className="p-2 bg-[#0791c4] rounded-lg">
                             <Check className="w-5 h-5 text-blue-600" />
                           </div>
                           Daily Spiritual Practice
                         </CardTitle>
                         <Badge
                           variant="outline"
-                          className="px-4 py-2 bg-blue-50 border-blue-200 text-blue-700 self-start sm:self-center"
+                          className="px-6 py-2 bg-[#faaf36]/10 border-[#faaf36] text-[#0791c4] font-semibold self-start sm:self-center"
                         >
                           {checklistCompletedCount}/{checklistTotalCount}{" "}
                           Complete
                         </Badge>
                       </div>
-                      <div className="space-y-2 mt-4">
-                        <div className="flex items-center justify-between text-sm text-gray-600">
-                          <span className="font-medium">Progress</span>
-                          <span className="font-semibold">
+                      <div className="space-y-3 mt-6">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-600">
+                            Progress
+                          </span>
+                          <span className="font-bold text-[#faaf36]">
                             {Math.round(checklistProgressPercentage)}%
                           </span>
                         </div>
                         <Progress
                           value={checklistProgressPercentage}
-                          className="h-2"
+                          className="h-2 bg-gray-100"
                         />
                       </div>
                     </CardHeader>
@@ -1070,7 +1065,7 @@ export default function MinimalPrayerDashboard() {
                         },
                         {
                           key: "fasting",
-                          icon: Minus, // or UtensilsCrossed if available
+                          icon: Minus,
                           label: "Fasting",
                           description: "Skip something for NCC",
                         },
@@ -1082,36 +1077,36 @@ export default function MinimalPrayerDashboard() {
                         },
                         {
                           key: "memorare",
-                          icon: Shield, // Protection symbol
+                          icon: Shield,
                           label: "Protection Prayer",
                           description:
-                            "Recite Psalms 91 or Prayer to St. Micheal the Archangel",
+                            "Recite Psalms 91 or Prayer to St. Michael the Archangel",
                         },
                         {
                           key: "our_father_done",
-                          icon: Heart, // or Hands if available
+                          icon: Heart,
                           label: "Our Father",
                           description: "Pray the Lord's Prayer",
                         },
                         {
                           key: "rosary_prayed",
-                          icon: Circle, // Represents rosary beads
+                          icon: Circle,
                           label: "3 Hail Mary",
-                          description: "Let's be to with mamma Mary",
+                          description: "Let's be with mama Mary",
                         },
                         {
                           key: "glory_be_to",
-                          icon: Crown, // Symbol of glory/Trinity
+                          icon: Crown,
                           label: "5 Glory be to",
                           description: "Let's adore the Holy Trinity",
                         },
                       ].map(({ key, icon: Icon, label, description }) => (
                         <div
                           key={key}
-                          className={`group p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                          className={`group p-5 rounded-xl border cursor-pointer transition-all duration-200 ${
                             spiritualChecklist[key as ChecklistItemKey]
-                              ? "border-blue-200 bg-blue-50"
-                              : "border-gray-200 hover:border-blue-200 hover:bg-blue-50"
+                              ? "border-[#faaf36] bg-[#faaf36]/5"
+                              : "border-gray-100 hover:border-[#faaf36] hover:bg-gray-50"
                           } ${
                             checklistSaving
                               ? "opacity-50 pointer-events-none"
@@ -1125,8 +1120,8 @@ export default function MinimalPrayerDashboard() {
                             <div
                               className={`p-2 rounded-full transition-colors ${
                                 spiritualChecklist[key as ChecklistItemKey]
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-gray-100 text-gray-500 group-hover:bg-blue-600 group-hover:text-white"
+                                  ? "bg-[#0791c4] text-white"
+                                  : "bg-gray-100 text-gray-500 group-hover:bg-[#0791c4] group-hover:text-white"
                               }`}
                             >
                               <Icon className="w-4 h-4" />
@@ -1141,11 +1136,11 @@ export default function MinimalPrayerDashboard() {
                             </div>
                             <div className="flex-shrink-0">
                               {spiritualChecklist[key as ChecklistItemKey] ? (
-                                <div className="p-1 bg-blue-600 rounded-full">
+                                <div className="p-1 bg-[#faaf36] rounded-full">
                                   <Check className="w-3 h-3 text-white" />
                                 </div>
                               ) : (
-                                <div className="w-5 h-5 border-2 border-gray-300 rounded-full group-hover:border-blue-600" />
+                                <div className="w-5 h-5 border-2 border-gray-300 rounded-full group-hover:border-[#faaf36]" />
                               )}
                             </div>
                           </div>
@@ -1157,11 +1152,11 @@ export default function MinimalPrayerDashboard() {
 
                 {/* Prayer Wall Sidebar */}
                 <div className="space-y-6">
-                  <Card className="border border-gray-200">
+                  <Card className="border border-gray-100">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <MessageCircle className="w-5 h-5 text-blue-600" />
+                        <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                          <MessageCircle className="w-6 h-6 text-[#faaf36]" />
                           Prayer Wall
                         </CardTitle>
                         <Button
@@ -1171,36 +1166,37 @@ export default function MinimalPrayerDashboard() {
                           disabled={
                             prayerWallRefreshing || prayerWallLoadingMore
                           }
+                          className="hover:bg-gray-100"
                         >
                           <RefreshCw
-                            className={`w-4 h-4 ${
+                            className={`w-5 h-5 text-[#faaf36] ${
                               prayerWallRefreshing ? "animate-spin" : ""
                             }`}
                           />
                         </Button>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 pt-2">
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-6 text-sm font-medium pt-3">
+                        <div className="flex items-center gap-2 text-[#faaf36]">
                           <Users className="w-4 h-4" />
                           {prayerWallStats.totalRequests} requests
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2 text-[#faaf36]">
                           <Heart className="w-4 h-4" />
                           {prayerWallStats.totalPrayers} prayers
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+                    <CardContent className="space-y-6 max-h-[600px] overflow-y-auto">
                       {prayerWallLoading &&
                       prayerRequests.length === 0 &&
                       !prayerWallRefreshing ? (
-                        <div className="flex items-center justify-center p-8 min-h-[200px]">
-                          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                        <div className="flex items-center justify-center p-12">
+                          <Loader2 className="w-8 h-8 animate-spin text-[#0791c4]" />
                         </div>
                       ) : prayerRequests.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                          <p className="text-sm">No prayer requests yet.</p>
+                        <div className="text-center py-12 text-gray-500">
+                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-[#faaf36] opacity-50" />
+                          <p className="font-medium">No prayer requests yet.</p>
                         </div>
                       ) : (
                         renderPrayerWallContent(false)
@@ -1211,24 +1207,27 @@ export default function MinimalPrayerDashboard() {
                         onOpenChange={setNewPrayerRequestDialogOpen}
                       >
                         <DialogTrigger asChild>
-                          <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white">
-                            <Plus className="w-4 h-4 mr-2" />
+                          <Button className="w-full mt-6 bg-[#0791c4] hover:bg-[#0791c4]/90 text-white py-3 rounded-xl font-semibold">
+                            <Plus className="w-5 h-5 mr-2" />
                             Share Prayer
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-md border border-gray-100 rounded-2xl">
                           <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <MessageCircle className="w-5 h-5 text-blue-600" />
+                            <DialogTitle className="flex items-center gap-3 text-xl font-bold">
+                              <MessageCircle className="w-6 h-6 text-[#faaf36]" />
                               Share Prayer
                             </DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription className="text-[#0791c4] font-medium">
                               Share with community. Be mindful.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="newPrayerMessage">
+                          <div className="space-y-6 py-4">
+                            <div className="space-y-3">
+                              <Label
+                                htmlFor="newPrayerMessage"
+                                className="text-[#faaf36] font-semibold"
+                              >
                                 Your Prayer
                               </Label>
                               <Textarea
@@ -1238,14 +1237,14 @@ export default function MinimalPrayerDashboard() {
                                   setNewPrayerMessage(e.target.value)
                                 }
                                 maxLength={500}
-                                rows={3}
-                                className="resize-none"
+                                rows={4}
+                                className="resize-none border border-gray-200 focus:border-[#faaf36] rounded-xl"
                               />
-                              <div className="flex justify-end text-xs text-gray-500">
+                              <div className="flex justify-end text-xs text-[#faaf36] font-medium">
                                 <span>{newPrayerMessage.length}/500</span>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-3">
                               <Switch
                                 id="newPrayerIsAnonymous"
                                 checked={newPrayerIsAnonymous}
@@ -1253,13 +1252,13 @@ export default function MinimalPrayerDashboard() {
                               />
                               <Label
                                 htmlFor="newPrayerIsAnonymous"
-                                className="cursor-pointer"
+                                className="cursor-pointer text-[#0791c4] font-medium"
                               >
                                 Post anonymously
                               </Label>
                             </div>
                           </div>
-                          <DialogFooter className="gap-2">
+                          <DialogFooter className="gap-3">
                             <Button
                               type="button"
                               variant="outline"
@@ -1267,6 +1266,7 @@ export default function MinimalPrayerDashboard() {
                                 setNewPrayerRequestDialogOpen(false)
                               }
                               disabled={prayerRequestSubmitting}
+                              className="border-gray-200 text-gray-600 hover:bg-gray-50"
                             >
                               Cancel
                             </Button>
@@ -1278,7 +1278,7 @@ export default function MinimalPrayerDashboard() {
                                 !newPrayerMessage.trim() ||
                                 newPrayerMessage.length > 500
                               }
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-[#0791c4] hover:bg-[#0791c4]/90 text-white"
                             >
                               {prayerRequestSubmitting ? (
                                 <>
@@ -1304,11 +1304,11 @@ export default function MinimalPrayerDashboard() {
 
           {activeTab === "prayers" && (
             <div className="p-0">
-              <Card className="border border-gray-200 w-full">
-                <CardHeader className="pb-4">
+              <Card className="border border-gray-100 w-full">
+                <CardHeader className="pb-6">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-xl">
-                      <MessageSquare className="w-6 h-6 text-blue-600" />
+                    <CardTitle className="flex items-center gap-3 text-2xl font-bold">
+                      <MessageSquare className="w-7 h-7 text-[#faaf36]" />
                       Community Prayer Wall
                     </CardTitle>
                     <Button
@@ -1316,37 +1316,40 @@ export default function MinimalPrayerDashboard() {
                       size="sm"
                       onClick={handlePrayerWallRefresh}
                       disabled={prayerWallRefreshing || prayerWallLoadingMore}
+                      className="hover:bg-gray-100"
                     >
                       <RefreshCw
-                        className={`w-4 h-4 ${
+                        className={`w-5 h-5 text-[#faaf36] ${
                           prayerWallRefreshing ? "animate-spin" : ""
                         }`}
                       />
                     </Button>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 pt-2">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-6 text-sm font-medium pt-3">
+                    <div className="flex items-center gap-2 text-[#faaf36]">
                       <Users className="w-4 h-4" />
                       {prayerWallStats.totalRequests} requests
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2 text-[#faaf36]">
                       <Heart className="w-4 h-4" />
                       {prayerWallStats.totalPrayers} prayers
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto">
+                <CardContent className="space-y-6 max-h-[calc(100vh-250px)] overflow-y-auto">
                   {prayerWallLoading &&
                   prayerRequests.length === 0 &&
                   !prayerWallRefreshing ? (
-                    <div className="flex items-center justify-center p-8 min-h-[300px]">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    <div className="flex items-center justify-center p-16">
+                      <Loader2 className="w-10 h-10 animate-spin text-[#0791c4]" />
                     </div>
                   ) : prayerRequests.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Prayer wall is empty.</p>
-                      <p className="text-sm">Share a request!</p>
+                    <div className="text-center py-16 text-gray-500">
+                      <MessageCircle className="w-16 h-16 mx-auto mb-6 text-[#faaf36] opacity-50" />
+                      <p className="text-lg font-medium">
+                        Prayer wall is empty.
+                      </p>
+                      <p className="text-sm mt-2">Share a request!</p>
                     </div>
                   ) : (
                     renderPrayerWallContent(true)
@@ -1357,24 +1360,27 @@ export default function MinimalPrayerDashboard() {
                     onOpenChange={setNewPrayerRequestDialogOpen}
                   >
                     <DialogTrigger asChild>
-                      <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white sticky bottom-4 shadow-xl z-10">
-                        <Plus className="w-4 h-4 mr-2" />
+                      <Button className="w-full mt-8 bg-[#0791c4] hover:bg-[#0791c4]/90 text-white sticky bottom-6 shadow-lg z-10 py-4 rounded-xl font-semibold text-lg">
+                        <Plus className="w-5 h-5 mr-2" />
                         Share Prayer
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md border border-gray-100 rounded-2xl">
                       <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          <MessageCircle className="w-5 h-5 text-blue-600" />
+                        <DialogTitle className="flex items-center gap-3 text-xl font-bold">
+                          <MessageCircle className="w-6 h-6 text-[#faaf36]" />
                           Share Prayer
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="text-[#0791c4] font-medium">
                           Share with community.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="newPrayerMessageFull">
+                      <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="newPrayerMessageFull"
+                            className="text-[#faaf36] font-semibold"
+                          >
                             Your Prayer
                           </Label>
                           <Textarea
@@ -1384,14 +1390,14 @@ export default function MinimalPrayerDashboard() {
                               setNewPrayerMessage(e.target.value)
                             }
                             maxLength={500}
-                            rows={3}
-                            className="resize-none"
+                            rows={4}
+                            className="resize-none border border-gray-200 focus:border-[#faaf36] rounded-xl"
                           />
-                          <div className="flex justify-end text-xs text-gray-500">
+                          <div className="flex justify-end text-xs text-[#faaf36] font-medium">
                             <span>{newPrayerMessage.length}/500</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
                           <Switch
                             id="newPrayerIsAnonymousFull"
                             checked={newPrayerIsAnonymous}
@@ -1399,18 +1405,19 @@ export default function MinimalPrayerDashboard() {
                           />
                           <Label
                             htmlFor="newPrayerIsAnonymousFull"
-                            className="cursor-pointer"
+                            className="cursor-pointer text-[#0791c4] font-medium"
                           >
                             Post anonymously
                           </Label>
                         </div>
                       </div>
-                      <DialogFooter className="gap-2">
+                      <DialogFooter className="gap-3">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setNewPrayerRequestDialogOpen(false)}
                           disabled={prayerRequestSubmitting}
+                          className="border-gray-200 text-gray-600 hover:bg-gray-50"
                         >
                           Cancel
                         </Button>
@@ -1422,7 +1429,7 @@ export default function MinimalPrayerDashboard() {
                             !newPrayerMessage.trim() ||
                             newPrayerMessage.length > 500
                           }
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-[#0791c4] hover:bg-[#0791c4]/90 text-white"
                         >
                           {prayerRequestSubmitting ? (
                             <>
@@ -1446,16 +1453,16 @@ export default function MinimalPrayerDashboard() {
 
           {activeTab !== "dashboard" && activeTab !== "prayers" && (
             <div className="p-6 text-center">
-              <Card className="inline-block p-10 border border-gray-200">
+              <Card className="inline-block p-12 border border-gray-100 rounded-2xl hover:border-[#faaf36] hover:shadow-sm transition-all duration-200">
                 <CardHeader>
-                  <CardTitle className="text-xl text-gray-800">
+                  <CardTitle className="text-2xl font-bold text-gray-800">
                     Coming Soon!
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 text-lg">
                     Content for{" "}
-                    <span className="font-semibold text-gray-700">
+                    <span className="font-bold text-[#faaf36]">
                       {
                         sidebarItems.find((item) => item.id === activeTab)
                           ?.label
@@ -1463,11 +1470,14 @@ export default function MinimalPrayerDashboard() {
                     </span>{" "}
                     is under development.
                   </p>
-                  <div className="mt-6">
+                  <div className="mt-8">
                     {React.createElement(
                       sidebarItems.find((item) => item.id === activeTab)
                         ?.icon || Home,
-                      { className: "w-16 h-16 mx-auto text-blue-600" }
+                      {
+                        className:
+                          "w-20 h-20 mx-auto text-[#faaf36] p-4 bg-[#faaf36]/10 rounded-2xl",
+                      }
                     )}
                   </div>
                 </CardContent>
