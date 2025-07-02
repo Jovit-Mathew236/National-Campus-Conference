@@ -930,9 +930,8 @@ export default function MinimalPrayerDashboard() {
                           </h2>
                           <div className="max-w-2xl mx-auto">
                             <p className="text-gray-600 leading-relaxed text-lg">
-                              Oh Lord, Let the Campuses be filled with the Love
-                              of the Father, Grace of Christ and the Anointing
-                              of the Holy Spirit. Holy Mary, intercede for us.
+                              O Lord, let the campuses be filled with young missionaries blessed with the love of the Father, the grace of Christ and the anointing of the Holy Spirit. 
+Holy Mary, intercede for us. Amen.
                               <br />
                               <br />
                               Lord, Bless NCC, all the{" "}
