@@ -601,7 +601,7 @@ export default function MinimalPrayerDashboard() {
           <div
             className={`space-y-4 ${
               isFullPage
-                ? "p-6 rounded-xl border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200"
+                ? "p-2 rounded-xl border border-gray-100 hover:border-[#faaf36] hover:shadow-sm transition-all duration-200"
                 : ""
             }`}
           >
@@ -649,14 +649,13 @@ export default function MinimalPrayerDashboard() {
                       }`}
                     />
                     {request.userPrayed ? "Prayed" : "I Prayed"}
-                    {isFullPage ? ` (${request.prayerCount})` : ""}
                   </Button>
                   <Badge
                     variant="outline"
                     className="border-gray-200 text-gray-600 bg-gray-50"
                   >
                     <Heart className="w-3 h-3 mr-1" />
-                    {request.prayerCount} {isFullPage ? "prayers" : ""}
+                    {request.prayerCount}
                   </Badge>
                 </div>
               </div>
@@ -824,7 +823,7 @@ export default function MinimalPrayerDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm font-medium mb-2">
-                          Today&apos;s Total Prayers
+                          Total Campus Prayers
                         </p>
                         <p className="text-3xl font-bold text-gray-900">
                           {dailyCampusPrayerCount}
@@ -895,7 +894,7 @@ export default function MinimalPrayerDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm font-medium mb-2">
-                          Community
+                          Prayer Wall
                         </p>
                         <p className="text-3xl font-bold text-gray-900">
                           {prayerWallStats.totalPrayers}
@@ -930,8 +929,10 @@ export default function MinimalPrayerDashboard() {
                           </h2>
                           <div className="max-w-2xl mx-auto">
                             <p className="text-gray-600 leading-relaxed text-lg">
-                              O Lord, let the campuses be filled with young missionaries blessed with the love of the Father, the grace of Christ and the anointing of the Holy Spirit. 
-Holy Mary, intercede for us. Amen.
+                              Oh Lord, let the campuses be filled with young
+                              missionaries blessed with the love of the Father,
+                              the grace of Christ and the anointing of the Holy
+                              Spirit. Holy Mary, intercede for us. Amen.
                               <br />
                               <br />
                               Lord, Bless NCC, all the{" "}
@@ -1335,7 +1336,7 @@ Holy Mary, intercede for us. Amen.
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6 max-h-[calc(100vh-250px)] overflow-y-auto">
+                <CardContent className="space-y-2 p-2 max-h-[calc(100vh-250px)] overflow-y-auto">
                   {prayerWallLoading &&
                   prayerRequests.length === 0 &&
                   !prayerWallRefreshing ? (
